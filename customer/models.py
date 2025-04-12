@@ -53,18 +53,19 @@ class CustomerStatus(models.TextChoices):
 
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=255)
-    phone_number = models.CharField(max_length=20)
-    area = models.CharField(max_length=255, blank=True, null=True)
-    date = models.DateField(blank=True, null=True)
+    name = models.CharField(max_length=255, db_index=True)
+    phone_number = models.CharField(max_length=20, db_index=True)
+    area = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    date = models.DateField(blank=True, null=True, db_index=True)
     remark = models.TextField(blank=True, null=True)
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_customers')
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_customers', db_index=True)
     status = models.CharField(
         max_length=20,
         choices=CustomerStatus.choices,
         default=None,
         null=True,
-        blank=True
+        blank=True,
+        db_index=True
     )
     notes = models.TextField(blank=True, null=True)
 
@@ -100,11 +101,11 @@ class FileImport(models.Model):
 
 class CustomerStatusHistory(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='status_history')
-    previous_status = models.CharField(max_length=20, choices=CustomerStatus.choices, null=True, blank=True)
-    new_status = models.CharField(max_length=20, choices=CustomerStatus.choices)
-    changed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='status_changes')
-    changed_at = models.DateTimeField(default=timezone.now)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='status_history', db_index=True)
+    previous_status = models.CharField(max_length=20, choices=CustomerStatus.choices, null=True, blank=True, db_index=True)
+    new_status = models.CharField(max_length=20, choices=CustomerStatus.choices, db_index=True)
+    changed_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='status_changes', db_index=True)
+    changed_at = models.DateTimeField(default=timezone.now, db_index=True)
     notes = models.TextField(blank=True, null=True)
 
     def __str__(self):

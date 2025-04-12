@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
 from django.utils import timezone
+from django.core.paginator import Paginator
 from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory
 from .forms import CustomerForm, CustomerStatusForm, CustomerAssignForm
 import pandas as pd
@@ -125,7 +126,7 @@ def sales_dashboard(request):
     if not request.user.is_sales():
         return HttpResponseForbidden("You don't have permission to access this page.")
 
-    assigned_customers = Customer.objects.filter(assigned_to=request.user)
+    assigned_customers = Customer.objects.filter(assigned_to=request.user).select_related('assigned_to')
     total_assigned = assigned_customers.count()
 
     # Get counts for each status
@@ -140,15 +141,23 @@ def sales_dashboard(request):
     # Prepare status choices for the template
     statuses = [(status, label) for status, label in CustomerStatus.choices]
 
+    # Get recent activity with optimized query
     recent_activity = CustomerStatusHistory.objects.filter(
         changed_by=request.user
-    ).order_by('-changed_at')[:10]
+    ).select_related('customer').order_by('-changed_at')[:10]
+
+    # Pagination for assigned customers
+    recent_customers = assigned_customers.order_by('-updated_at')
+    paginator = Paginator(recent_customers, 10)  # Show 10 customers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
         'total_assigned': total_assigned,
         'status_data': status_data,
         'recent_activity': recent_activity,
-        'assigned_customers': assigned_customers[:10],
+        'assigned_customers': page_obj,
+        'page_obj': page_obj,  # For pagination template
         'statuses': statuses
     }
 
@@ -286,10 +295,11 @@ def import_history(request):
 # Customer Management Views
 @login_required
 def customer_list(request):
+    # Use select_related to optimize the query for assigned_to
     if request.user.is_manager():
-        customers = Customer.objects.all()
+        customers = Customer.objects.select_related('assigned_to').all()
     else:
-        customers = Customer.objects.filter(assigned_to=request.user)
+        customers = Customer.objects.select_related('assigned_to').filter(assigned_to=request.user)
 
     # Filter by status if provided
     status_filter = request.GET.get('status')
@@ -305,8 +315,14 @@ def customer_list(request):
             Q(area__icontains=search_query)
         )
 
+    # Pagination
+    paginator = Paginator(customers, 25)  # Show 25 customers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'customers': customers,
+        'customers': page_obj,
+        'page_obj': page_obj,  # For pagination template
         'statuses': CustomerStatus.choices,
         'current_status': status_filter,
         'search_query': search_query
@@ -408,11 +424,17 @@ def unassigned_customers(request):
     if not request.user.is_manager():
         return HttpResponseForbidden("You don't have permission to access this page.")
 
-    customers = Customer.objects.filter(assigned_to__isnull=True)
+    customers = Customer.objects.filter(assigned_to__isnull=True).order_by('-created_at')
     sales_users = User.objects.filter(role=User.SALES)
 
+    # Pagination
+    paginator = Paginator(customers, 25)  # Show 25 customers per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        'customers': customers,
+        'customers': page_obj,
+        'page_obj': page_obj,  # For pagination template
         'sales_users': sales_users
     }
 
