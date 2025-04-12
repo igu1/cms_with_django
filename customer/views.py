@@ -207,7 +207,7 @@ def import_file(request):
             os.unlink(temp_file_path)
 
             # Validate required columns
-            required_columns = ['name', 'phone_number']
+            required_columns = ['phone_number']
             for col in required_columns:
                 if col not in df.columns:
                     messages.error(request, f'Required column {col} is missing')
@@ -225,9 +225,10 @@ def import_file(request):
                     existing_customer = Customer.objects.filter(phone_number=row['phone_number']).first()
 
                     if existing_customer:
-                        # Update existing customer
-                        existing_customer.name = row['name']
-
+                        if 'name' in row and pd.notna(row['name']):
+                            existing_customer.name = row['name']
+                        else:
+                            existing_customer.name = 'Unknown'
                         if 'area' in row and pd.notna(row['area']):
                             existing_customer.area = row['area']
                         if 'date' in row and pd.notna(row['date']):
@@ -238,11 +239,13 @@ def import_file(request):
                     else:
                         # Create new customer
                         customer_data = {
-                            'name': row['name'],
                             'phone_number': row['phone_number']
                         }
-
-
+                        
+                        if 'name' in row and pd.notna(row['name']):
+                            customer_data['name'] = row['name']
+                        else:
+                            customer_data['name'] = 'Unknown'
                         if 'area' in row and pd.notna(row['area']):
                             customer_data['area'] = row['area']
                         if 'date' in row and pd.notna(row['date']):
