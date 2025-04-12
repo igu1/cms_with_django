@@ -10,7 +10,7 @@ services:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/customer_management
-      - DEBUG=False
+      - DEBUG=True
       - COMPANY_NAME=alims.co.in
       - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
       - ALLOWED_HOSTS=localhost,127.0.0.1
