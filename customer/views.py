@@ -5,11 +5,13 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
 from django.utils import timezone
-from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory
+from django.db import transaction
+from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory, CustomerField, ColumnMapping, MappingField
 import pandas as pd
 import uuid
 import os
 import random
+import json
 
 # Authentication Views
 def login_view(request):
@@ -144,105 +146,346 @@ def import_file(request):
     if not request.user.is_manager():
         return HttpResponseForbidden("You don't have permission to access this page.")
 
+    # Get available column mappings
+    mappings = ColumnMapping.objects.filter(created_by=request.user)
+    default_mapping = mappings.filter(is_default=True).first()
+
     if request.method == 'POST':
-        if 'file' not in request.FILES:
-            messages.error(request, 'Please select a file to upload')
-            return redirect('import_file')
+        # Check if this is a mapping selection step
+        if 'mapping_step' in request.POST:
+            # Store the file in the session for the next step
+            if 'file' not in request.FILES:
+                messages.error(request, 'Please select a file to upload')
+                return redirect('import_file')
 
-        file = request.FILES['file']
-        file_name = file.name
-        file_ext = os.path.splitext(file_name)[1].lower()
+            file = request.FILES['file']
+            file_name = file.name
+            file_ext = os.path.splitext(file_name)[1].lower()
 
-        if file_ext not in ['.xlsx', '.csv']:
-            messages.error(request, 'Only XLSX and CSV files are supported')
-            return redirect('import_file')
+            if file_ext not in ['.xlsx', '.csv']:
+                messages.error(request, 'Only XLSX and CSV files are supported')
+                return redirect('import_file')
 
-        # Create a temporary file to handle the upload
-        import tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
-            for chunk in file.chunks():
-                temp_file.write(chunk)
-            temp_file_path = temp_file.name
+            # Create a temporary file to handle the upload
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                for chunk in file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
 
-        # Save the file import record
-        file_import = FileImport.objects.create(
-            file_name=file_name,
-            file=file,
-            imported_by=request.user
-        )
+            # Read the file headers
+            try:
+                if file_ext == '.xlsx':
+                    df = pd.read_excel(temp_file_path, nrows=5)
+                else:  # CSV
+                    df = pd.read_csv(temp_file_path, nrows=5)
 
-        try:
-            # Process the file
-            if file_ext == '.xlsx':
-                df = pd.read_excel(temp_file_path)
-            else:  # CSV
-                df = pd.read_csv(temp_file_path)
+                headers = list(df.columns)
+                preview_data = df.head(5).to_dict('records')
 
-            # Clean up the temporary file
-            os.unlink(temp_file_path)
+                # Store the file path in the session
+                request.session['temp_file_path'] = temp_file_path
+                request.session['file_name'] = file_name
+                request.session['file_ext'] = file_ext
 
-            # Validate required columns
-            required_columns = ['name', 'phone_number']
-            for col in required_columns:
-                if col not in df.columns:
-                    messages.error(request, f'Required column {col} is missing')
-                    file_import.delete()  # Delete the file import record
-                    return redirect('import_file')
+                # Get mapping ID if provided
+                mapping_id = request.POST.get('mapping')
+                selected_mapping = None
 
-            # Process the data
-            total_records = len(df)
-            successful_records = 0
-            failed_records = 0
+                if mapping_id and mapping_id != 'new':
+                    selected_mapping = get_object_or_404(ColumnMapping, id=mapping_id, created_by=request.user)
 
-            for _, row in df.iterrows():
-                try:
-                    # Check if customer with same phone number already exists
-                    existing_customer = Customer.objects.filter(phone_number=row['phone_number']).first()
+                # Get all base fields from Customer model
+                base_fields = [
+                    {'name': 'name', 'label': 'Name', 'required': True},
+                    {'name': 'phone_number', 'label': 'Phone Number', 'required': True},
+                    {'name': 'email', 'label': 'Email', 'required': False},
+                    {'name': 'address', 'label': 'Address', 'required': False},
+                    {'name': 'notes', 'label': 'Notes', 'required': False},
+                ]
 
-                    if existing_customer:
-                        # Update existing customer
-                        existing_customer.name = row['name']
-                        if 'email' in row and pd.notna(row['email']):
-                            existing_customer.email = row['email']
-                        if 'address' in row and pd.notna(row['address']):
-                            existing_customer.address = row['address']
-                        existing_customer.save()
-                    else:
-                        # Create new customer
-                        customer_data = {
-                            'name': row['name'],
-                            'phone_number': row['phone_number']
-                        }
+                # Get all custom fields
+                custom_fields = list(CustomerField.objects.filter(active=True).values('name', 'label', 'required', 'field_type'))
 
-                        if 'email' in row and pd.notna(row['email']):
-                            customer_data['email'] = row['email']
-                        if 'address' in row and pd.notna(row['address']):
-                            customer_data['address'] = row['address']
+                # Prepare mapping fields if a mapping was selected
+                mapping_fields = []
+                if selected_mapping:
+                    mapping_fields = list(selected_mapping.fields.all().values(
+                        'csv_column', 'field_type', 'field_name', 'is_required', 'default_value'
+                    ))
 
-                        Customer.objects.create(**customer_data)
+                context = {
+                    'headers': headers,
+                    'preview_data': preview_data,
+                    'base_fields': base_fields,
+                    'custom_fields': custom_fields,
+                    'selected_mapping': selected_mapping,
+                    'mappings': mappings,
+                    'mapping_fields': mapping_fields,
+                    'file_name': file_name
+                }
 
-                    successful_records += 1
-                except Exception as e:
-                    failed_records += 1
-                    print(f"Error processing record: {e}")
+                return render(request, 'customer/import_mapping.html', context)
 
-            # Update file import record
-            file_import.total_records = total_records
-            file_import.successful_records = successful_records
-            file_import.failed_records = failed_records
-            file_import.save()
+            except Exception as e:
+                # Clean up the temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                messages.error(request, f'Error reading file: {str(e)}')
+                return redirect('import_file')
 
-            messages.success(
-                request,
-                f'File imported successfully. {successful_records} records processed, {failed_records} failed.'
+        # Check if this is the final import step
+        elif 'import_step' in request.POST:
+            # Get the file path from the session
+            temp_file_path = request.session.get('temp_file_path')
+            file_name = request.session.get('file_name')
+            file_ext = request.session.get('file_ext')
+
+            if not temp_file_path or not os.path.exists(temp_file_path):
+                messages.error(request, 'File upload session expired. Please upload the file again.')
+                return redirect('import_file')
+
+            # Get the mapping data from the form
+            mapping_data = json.loads(request.POST.get('mapping_data', '{}'))
+            save_mapping = request.POST.get('save_mapping') == 'on'
+            mapping_name = request.POST.get('mapping_name', '')
+
+            # Create a new mapping if requested
+            mapping = None
+            if save_mapping and mapping_name:
+                with transaction.atomic():
+                    mapping = ColumnMapping.objects.create(
+                        name=mapping_name,
+                        description=f'Created during import of {file_name}',
+                        is_default=request.POST.get('set_default') == 'on',
+                        created_by=request.user
+                    )
+
+                    # If this is set as default, unset any other defaults
+                    if mapping.is_default:
+                        ColumnMapping.objects.filter(created_by=request.user, is_default=True).exclude(id=mapping.id).update(is_default=False)
+
+                    # Create mapping fields
+                    for csv_column, field_info in mapping_data.items():
+                        MappingField.objects.create(
+                            mapping=mapping,
+                            csv_column=csv_column,
+                            field_type=field_info['field_type'],
+                            field_name=field_info['field_name'],
+                            is_required=field_info['required'],
+                            default_value=field_info.get('default_value', '')
+                        )
+
+            # Create a file import record
+            file_import = FileImport.objects.create(
+                file_name=file_name,
+                file=file_name,  # We'll update this with the actual file later
+                imported_by=request.user,
+                mapping=mapping
             )
 
-        except Exception as e:
-            messages.error(request, f'Error processing file: {str(e)}')
-            file_import.delete()  # Delete the file import record
-            # Clean up the temporary file if it still exists
-            if os.path.exists(temp_file_path):
+            try:
+                # Process the file
+                if file_ext == '.xlsx':
+                    df = pd.read_excel(temp_file_path)
+                else:  # CSV
+                    df = pd.read_csv(temp_file_path)
+
+                # Process the data using the mapping
+                total_records = len(df)
+                successful_records = 0
+                failed_records = 0
+
+                for _, row in df.iterrows():
+                    try:
+                        # Prepare customer data based on mapping
+                        base_data = {}
+                        custom_data = {}
+
+                        for csv_column, field_info in mapping_data.items():
+                            # Skip if the column doesn't exist in the CSV
+                            if csv_column not in df.columns:
+                                continue
+
+                            value = row[csv_column]
+                            # Use default value if the cell is empty
+                            if pd.isna(value) and field_info.get('default_value'):
+                                value = field_info['default_value']
+                            # Skip if still empty and not required
+                            elif pd.isna(value) and not field_info['required']:
+                                continue
+                            # Skip if empty (will be caught by validation if required)
+                            elif pd.isna(value):
+                                continue
+
+                            # Add to appropriate data dict based on field type
+                            if field_info['field_type'] == 'base':
+                                base_data[field_info['field_name']] = value
+                            else:  # custom
+                                custom_data[field_info['field_name']] = value
+
+                        # Validate required base fields
+                        if 'name' not in base_data or 'phone_number' not in base_data:
+                            raise ValueError('Name and phone number are required')
+
+                        # Check if customer with same phone number already exists
+                        existing_customer = Customer.objects.filter(phone_number=base_data['phone_number']).first()
+
+                        if existing_customer:
+                            # Update existing customer
+                            for field, value in base_data.items():
+                                setattr(existing_customer, field, value)
+
+                            # Update custom data
+                            if custom_data:
+                                existing_data = existing_customer.custom_data or {}
+                                existing_data.update(custom_data)
+                                existing_customer.custom_data = existing_data
+
+                            existing_customer.save()
+                        else:
+                            # Create new customer
+                            customer = Customer(**base_data)
+                            if custom_data:
+                                customer.custom_data = custom_data
+                            customer.save()
+
+                        successful_records += 1
+                    except Exception as e:
+                        failed_records += 1
+                        print(f"Error processing record: {e}")
+
+                # Update file import record
+                file_import.total_records = total_records
+                file_import.successful_records = successful_records
+                file_import.failed_records = failed_records
+
+                # Save the actual file to the FileImport record
+                with open(temp_file_path, 'rb') as f:
+                    file_import.file.save(file_name, f, save=True)
+
+                messages.success(
+                    request,
+                    f'File imported successfully. {successful_records} records processed, {failed_records} failed.'
+                )
+
+            except Exception as e:
+                messages.error(request, f'Error processing file: {str(e)}')
+                file_import.delete()  # Delete the file import record
+            finally:
+                # Clean up the temporary file
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
+                # Clean up the session
+                if 'temp_file_path' in request.session:
+                    del request.session['temp_file_path']
+                if 'file_name' in request.session:
+                    del request.session['file_name']
+                if 'file_ext' in request.session:
+                    del request.session['file_ext']
+
+            return redirect('import_history')
+
+        # Regular file upload (first step)
+        else:
+            if 'file' not in request.FILES:
+                messages.error(request, 'Please select a file to upload')
+                return redirect('import_file')
+
+            file = request.FILES['file']
+            file_name = file.name
+            file_ext = os.path.splitext(file_name)[1].lower()
+
+            if file_ext not in ['.xlsx', '.csv']:
+                messages.error(request, 'Only XLSX and CSV files are supported')
+                return redirect('import_file')
+
+            # Create a temporary file to handle the upload
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+                for chunk in file.chunks():
+                    temp_file.write(chunk)
+                temp_file_path = temp_file.name
+
+            # Save the file import record
+            file_import = FileImport.objects.create(
+                file_name=file_name,
+                file=file,
+                imported_by=request.user
+            )
+
+            try:
+                # Process the file
+                if file_ext == '.xlsx':
+                    df = pd.read_excel(temp_file_path)
+                else:  # CSV
+                    df = pd.read_csv(temp_file_path)
+
+                # Clean up the temporary file
                 os.unlink(temp_file_path)
+
+                # Validate required columns
+                required_columns = ['name', 'phone_number']
+                for col in required_columns:
+                    if col not in df.columns:
+                        messages.error(request, f'Required column {col} is missing')
+                        file_import.delete()  # Delete the file import record
+                        return redirect('import_file')
+
+                # Process the data
+                total_records = len(df)
+                successful_records = 0
+                failed_records = 0
+
+                for _, row in df.iterrows():
+                    try:
+                        # Check if customer with same phone number already exists
+                        existing_customer = Customer.objects.filter(phone_number=row['phone_number']).first()
+
+                        if existing_customer:
+                            # Update existing customer
+                            existing_customer.name = row['name']
+                            if 'email' in row and pd.notna(row['email']):
+                                existing_customer.email = row['email']
+                            if 'address' in row and pd.notna(row['address']):
+                                existing_customer.address = row['address']
+                            existing_customer.save()
+                        else:
+                            # Create new customer
+                            customer_data = {
+                                'name': row['name'],
+                                'phone_number': row['phone_number']
+                            }
+
+                            if 'email' in row and pd.notna(row['email']):
+                                customer_data['email'] = row['email']
+                            if 'address' in row and pd.notna(row['address']):
+                                customer_data['address'] = row['address']
+
+                            Customer.objects.create(**customer_data)
+
+                        successful_records += 1
+                    except Exception as e:
+                        failed_records += 1
+                        print(f"Error processing record: {e}")
+
+                # Update file import record
+                file_import.total_records = total_records
+                file_import.successful_records = successful_records
+                file_import.failed_records = failed_records
+                file_import.save()
+
+                messages.success(
+                    request,
+                    f'File imported successfully. {successful_records} records processed, {failed_records} failed.'
+                )
+
+            except Exception as e:
+                messages.error(request, f'Error processing file: {str(e)}')
+                file_import.delete()  # Delete the file import record
+                # Clean up the temporary file if it still exists
+                if os.path.exists(temp_file_path):
+                    os.unlink(temp_file_path)
 
         return redirect('import_history')
 

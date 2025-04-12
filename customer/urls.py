@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import views_mapping
 from django.contrib.auth import views as auth_views
 
 urlpatterns = [
@@ -14,6 +15,13 @@ urlpatterns = [
     # File Import URLs
     path('import/', views.import_file, name='import_file'),
     path('import/history/', views.import_history, name='import_history'),
+    path('import/detect-headers/', views_mapping.detect_csv_headers, name='detect_csv_headers'),
+
+    # Column Mapping URLs
+    path('mappings/', views_mapping.mapping_list, name='mapping_list'),
+    path('mappings/create/', views_mapping.mapping_create, name='mapping_create'),
+    path('mappings/<int:mapping_id>/edit/', views_mapping.mapping_edit, name='mapping_edit'),
+    path('mappings/<int:mapping_id>/delete/', views_mapping.mapping_delete, name='mapping_delete'),
 
     # Customer Management URLs
     path('customers/', views.customer_list, name='customer_list'),

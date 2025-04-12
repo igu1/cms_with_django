@@ -9,7 +9,14 @@ def get_item(dictionary, key):
     Get an item from a dictionary using a key.
     Usage: {{ dictionary|get_item:key }}
     """
-    return dictionary.get(key)
+    if dictionary is None:
+        return None
+    if hasattr(dictionary, 'get'):
+        return dictionary.get(key)
+    try:
+        return dictionary[key]
+    except (KeyError, TypeError):
+        return None
 
 @register.filter
 def div(value, arg):
