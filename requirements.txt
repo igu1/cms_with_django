@@ -11,6 +11,7 @@ decorator
 dj-database-url
 Django==4.2.*
 django-debug-toolbar
+django-jazzmin
 docutils
 et_xmlfile
 executing
