@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}Import History - Customer Management{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Import History</h1>
+    <p class="mt-1 text-sm text-gray-500">View history of all imported files</p>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <div class="flex justify-between mb-4">
+            <div>
+                <a href="{% url 'import_file' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-upload mr-2"></i> Import New File
+                </a>
+            </div>
+        </div>
+        
+        <div class="mt-4 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">File Name</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Imported By</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Total Records</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Success Rate</th>
+                                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                                    <span class="sr-only">Actions</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for import in imports %}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ import.file_name }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.imported_by.get_full_name|default:import.imported_by.username }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.imported_at|date:"M d, Y H:i" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.total_records }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                    {% if import.total_records > 0 %}
+                                    <div class="flex items-center">
+                                        <span class="mr-2">{{ import.successful_records|floatformat:0|default:0|div:import.total_records|mul:100 }}%</span>
+                                        <div class="relative w-24">
+                                            <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                                                <div style="width: {{ import.successful_records|floatformat:0|default:0|div:import.total_records|mul:100 }}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <span>N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                    <a href="{{ import.file.url }}" class="text-indigo-600 hover:text-indigo-900" download>Download</a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="py-4 text-sm text-gray-500 text-center">No import history available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
