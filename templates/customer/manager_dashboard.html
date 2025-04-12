@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load customer_tags %}
 
 {% block title %}Manager Dashboard - Customer Management{% endblock %}
 
@@ -28,7 +29,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Assigned Customers -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
@@ -47,7 +48,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Unassigned Customers -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
@@ -71,7 +72,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Import Data -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
@@ -104,14 +105,27 @@
                 {% for status, count in status_data.items %}
                 <div class="mb-2">
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-700">
-                            {% if status %}{{ status }}{% else %}No Status{% endif %}
-                        </span>
+                        <div class="flex items-center">
+                            {% if status %}
+                                {% status_icon status %}
+                                <span class="ml-2 text-sm font-medium text-gray-700">
+                                    {% if status == 'CALLED' %}Called
+                                    {% elif status == 'NOT_ANSWERED' %}Not Answered
+                                    {% elif status == 'INVALID_NUMBER' %}Invalid Number
+                                    {% elif status == 'PLAN_PRESENTED' %}Plan Presented
+                                    {% elif status == 'SHORTLISTED' %}Shortlisted
+                                    {% else %}{{ status }}{% endif %}
+                                </span>
+                            {% else %}
+                                <i class="fas fa-question-circle text-gray-500"></i>
+                                <span class="ml-2 text-sm font-medium text-gray-700">No Status</span>
+                            {% endif %}
+                        </div>
                         <span class="text-sm text-gray-500">{{ count }}</span>
                     </div>
                     <div class="mt-1 relative">
                         <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
-                            <div style="width: {% if total_customers > 0 %}{{ count|floatformat:0|default:0|div:total_customers|mul:100 }}{% else %}0{% endif %}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"></div>
+                            <div style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {% if status == 'CALLED' %}bg-blue-500{% elif status == 'NOT_ANSWERED' %}bg-yellow-500{% elif status == 'INVALID_NUMBER' %}bg-red-500{% elif status == 'PLAN_PRESENTED' %}bg-purple-500{% elif status == 'SHORTLISTED' %}bg-green-500{% else %}bg-indigo-500{% endif %}"></div>
                         </div>
                     </div>
                 </div>
@@ -121,7 +135,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Imports -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">

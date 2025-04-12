@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+{% load customer_tags %}
+
+{% block title %}{{ customer.name }} - Customer Management{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-gray-900">{{ customer.name }}</h1>
+        <p class="mt-1 text-sm text-gray-500">Customer details and status history</p>
+    </div>
+    <div>
+        <a href="{% url 'customer_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <i class="fas fa-arrow-left mr-2"></i> Back to List
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    <!-- Customer Information -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Information</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and contact information.</p>
+        </div>
+        <div class="border-t border-gray-200">
+            <dl>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.name }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Phone number</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.phone_number }}</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.email|default:"Not provided" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Address</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.address|default:"Not provided" }}</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Current status</dt>
+                    <dd class="mt-1 text-sm sm:mt-0 sm:col-span-2">
+                        {{ customer.status|status_badge }}
+                    </dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Assigned to</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        {% if customer.assigned_to %}
+                        {{ customer.assigned_to.get_full_name|default:customer.assigned_to.username }}
+                        {% else %}
+                        <span class="text-yellow-500">Unassigned</span>
+                        {% endif %}
+                    </dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Created at</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.created_at|date:"F j, Y, g:i a" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Last updated</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.updated_at|date:"F j, Y, g:i a" }}</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Notes</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.notes|default:"No notes" }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Update Status -->
+    <div class="space-y-5">
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Update Status</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Change the customer's current status.</p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <form id="update-status-form" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+                        <div class="relative">
+                            <select id="status" name="status" class="mt-1 block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none">
+                                <option value="" disabled {% if not customer.status %}selected{% endif %}>Select Status</option>
+                                <option value="CALLED" {% if customer.status == 'CALLED' %}selected{% endif %} data-icon="fas fa-phone text-blue-500">Called</option>
+                                <option value="NOT_ANSWERED" {% if customer.status == 'NOT_ANSWERED' %}selected{% endif %} data-icon="fas fa-phone-slash text-yellow-500">Not Answered</option>
+                                <option value="INVALID_NUMBER" {% if customer.status == 'INVALID_NUMBER' %}selected{% endif %} data-icon="fas fa-times-circle text-red-500">Invalid Number</option>
+                                <option value="PLAN_PRESENTED" {% if customer.status == 'PLAN_PRESENTED' %}selected{% endif %} data-icon="fas fa-file-alt text-purple-500">Plan Presented</option>
+                                <option value="SHORTLISTED" {% if customer.status == 'SHORTLISTED' %}selected{% endif %} data-icon="fas fa-star text-green-500">Shortlisted</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                                <span id="status-icon" class="text-gray-500"><i class="fas fa-tag"></i></span>
+                            </div>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+                        <textarea id="notes" name="notes" rows="3" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                    </div>
+                    <div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Update Status
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if user.is_manager %}
+        <!-- Assign Customer (Manager Only) -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Assign Customer</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Assign this customer to a sales person.</p>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <form id="assign-customer-form" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="sales_user" class="block text-sm font-medium text-gray-700">Sales Person</label>
+                        <select id="sales_user" name="sales_user" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                            <option value="">Unassigned</option>
+                            {% for user in sales_users %}
+                            <option value="{{ user.id }}" {% if customer.assigned_to == user %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            Assign
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status History -->
+<div class="mt-5 bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:px-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">Status History</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Record of all status changes.</p>
+    </div>
+    <div class="border-t border-gray-200">
+        <div class="flow-root">
+            <ul role="list" class="divide-y divide-gray-200">
+                {% for history in status_history %}
+                <li class="py-4 px-4 sm:px-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">
+                                    <div class="flex items-center">
+                                        <span class="mr-2">Changed from</span>
+                                        {% if history.previous_status %}
+                                            {{ history.previous_status|status_badge }}
+                                        {% else %}
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800"><i class="fas fa-minus-circle mr-1"></i> None</span>
+                                        {% endif %}
+                                        <span class="mx-2"><i class="fas fa-arrow-right text-gray-500"></i></span>
+                                        {{ history.new_status|status_badge }}
+                                    </div>
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    By {{ history.changed_by.get_full_name|default:history.changed_by.username }} on {{ history.changed_at|date:"F j, Y, g:i a" }}
+                                </p>
+                                {% if history.notes %}
+                                <p class="mt-1 text-sm text-gray-500">Note: {{ history.notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="py-4 px-4 sm:px-6 text-center text-sm text-gray-500">No status history available</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const updateStatusForm = document.getElementById('update-status-form');
+        const assignCustomerForm = document.getElementById('assign-customer-form');
+        const statusSelect = document.getElementById('status');
+        const statusIcon = document.getElementById('status-icon');
+
+        // Function to update the status icon based on the selected option
+        function updateStatusIcon() {
+            const selectedOption = statusSelect.options[statusSelect.selectedIndex];
+            if (selectedOption && selectedOption.getAttribute('data-icon')) {
+                statusIcon.innerHTML = `<i class="${selectedOption.getAttribute('data-icon')}"></i>`;
+            } else {
+                statusIcon.innerHTML = '<i class="fas fa-tag text-gray-500"></i>';
+            }
+        }
+
+        // Initialize the status icon
+        if (statusSelect) {
+            updateStatusIcon();
+
+            // Update the icon when the status changes
+            statusSelect.addEventListener('change', updateStatusIcon);
+        }
+
+        if (updateStatusForm) {
+            updateStatusForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(updateStatusForm);
+
+                fetch('{% url "update_customer_status" customer.id %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload the page to show updated status
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        }
+
+        if (assignCustomerForm) {
+            assignCustomerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(assignCustomerForm);
+
+                fetch('{% url "assign_customer" customer.id %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload the page to show updated assignment
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

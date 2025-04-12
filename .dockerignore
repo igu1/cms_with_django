@@ -1,0 +1,40 @@
+# Exclude git and environment files
+.git
+.gitignore
+.env
+.env.local
+
+# Exclude development and testing files
+*.sqlite3
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Exclude IDE files
+.vscode/
+.idea/
+
+# Exclude documentation
+docs/
+*.md
+
+# Exclude local media and static files
+media/
+static/
+staticfiles/
+
+# Exclude dependency directories
+node_modules/
+venv/
+env/
+ENV/
+
+# Exclude logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Exclude Docker compose files (except main one)
+docker-compose.override.yml

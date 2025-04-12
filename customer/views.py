@@ -9,6 +9,7 @@ from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHi
 import pandas as pd
 import uuid
 import os
+import random
 
 # Authentication Views
 def login_view(request):
@@ -143,7 +144,11 @@ def import_file(request):
     if not request.user.is_manager():
         return HttpResponseForbidden("You don't have permission to access this page.")
 
-    if request.method == 'POST' and request.FILES.get('file'):
+    if request.method == 'POST':
+        if 'file' not in request.FILES:
+            messages.error(request, 'Please select a file to upload')
+            return redirect('import_file')
+
         file = request.FILES['file']
         file_name = file.name
         file_ext = os.path.splitext(file_name)[1].lower()
@@ -151,6 +156,13 @@ def import_file(request):
         if file_ext not in ['.xlsx', '.csv']:
             messages.error(request, 'Only XLSX and CSV files are supported')
             return redirect('import_file')
+
+        # Create a temporary file to handle the upload
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+            for chunk in file.chunks():
+                temp_file.write(chunk)
+            temp_file_path = temp_file.name
 
         # Save the file import record
         file_import = FileImport.objects.create(
@@ -162,9 +174,12 @@ def import_file(request):
         try:
             # Process the file
             if file_ext == '.xlsx':
-                df = pd.read_excel(file)
+                df = pd.read_excel(temp_file_path)
             else:  # CSV
-                df = pd.read_csv(file)
+                df = pd.read_csv(temp_file_path)
+
+            # Clean up the temporary file
+            os.unlink(temp_file_path)
 
             # Validate required columns
             required_columns = ['name', 'phone_number']
@@ -225,6 +240,9 @@ def import_file(request):
         except Exception as e:
             messages.error(request, f'Error processing file: {str(e)}')
             file_import.delete()  # Delete the file import record
+            # Clean up the temporary file if it still exists
+            if os.path.exists(temp_file_path):
+                os.unlink(temp_file_path)
 
         return redirect('import_history')
 
@@ -387,6 +405,48 @@ def bulk_assign_customers(request):
     messages.success(
         request,
         f'{len(customer_ids)} customers assigned to {sales_user.username}'
+    )
+
+    return redirect('unassigned_customers')
+
+@login_required
+def random_assign_customers(request):
+    if not request.user.is_manager() or request.method != 'POST':
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    sales_user_id = request.POST.get('sales_user')
+    count = int(request.POST.get('count', 5))  # Default to 5 if not specified
+
+    if not sales_user_id:
+        messages.error(request, 'Please select a sales user')
+        return redirect('unassigned_customers')
+
+    sales_user = get_object_or_404(User, id=sales_user_id, role=User.SALES)
+
+    # Get unassigned customers
+    unassigned_customers = Customer.objects.filter(assigned_to__isnull=True)
+
+    # Check if we have enough customers
+    available_count = unassigned_customers.count()
+    if available_count == 0:
+        messages.error(request, 'No unassigned customers available')
+        return redirect('unassigned_customers')
+
+    # Adjust count if needed
+    if count > available_count:
+        count = available_count
+
+    # Randomly select customers
+    selected_customers = random.sample(list(unassigned_customers), count)
+
+    # Assign customers
+    for customer in selected_customers:
+        customer.assigned_to = sales_user
+        customer.save()
+
+    messages.success(
+        request,
+        f'Successfully assigned {count} random customers to {sales_user.username}'
     )
 
     return redirect('unassigned_customers')

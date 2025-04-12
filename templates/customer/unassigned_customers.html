@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Unassigned Customers - Customer Management{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-semibold text-gray-900">Unassigned Customers</h1>
+        <p class="mt-1 text-sm text-gray-500">Assign customers to sales team members</p>
+    </div>
+    <div>
+        <a href="{% url 'customer_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <i class="fas fa-arrow-left mr-2"></i> Back to All Customers
+        </a>
+    </div>
+</div>
+
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        {% if customers %}
+        <form method="POST" action="{% url 'bulk_assign_customers' %}" id="bulk-assign-form">
+            {% csrf_token %}
+
+            <div class="mb-4">
+                <label for="sales_user" class="block text-sm font-medium text-gray-700">Assign selected customers to:</label>
+                <div class="mt-1 flex items-center">
+                    <select id="sales_user" name="sales_user" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="" disabled selected>Select Sales Person</option>
+                        {% for user in sales_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Assign Selected
+                    </button>
+                </div>
+            </div>
+
+            {% comment %} <!-- Random Assignment -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Random Assignment</h3>
+                <p class="mt-1 text-sm text-gray-500">Quickly assign a random number of customers to a sales person</p>
+
+                <form method="POST" action="{% url 'random_assign_customers' %}" class="mt-4" id="random-assign-form">
+                    {% csrf_token %}
+                    <div class="flex items-end space-x-4">
+                        <div class="flex-1">
+                            <label for="random_sales_user" class="block text-sm font-medium text-gray-700">Sales Person</label>
+                            <select id="random_sales_user" name="sales_user" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                                <option value="" disabled selected>Select Sales Person</option>
+                                {% for user in sales_users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="count" class="block text-sm font-medium text-gray-700">Number of Customers</label>
+                            <input type="number" name="count" id="count" min="1" max="50" value="5" class="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        </div>
+                        <div>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <i class="fas fa-random mr-2"></i> Assign Random
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div> {% endcomment %}
+
+            <div class="mt-4 flow-root">
+                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="relative py-3.5 pl-4 pr-3 sm:pl-0">
+                                        <input type="checkbox" id="select-all" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    </th>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Created</th>
+                                    <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                                        <span class="sr-only">Actions</span>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for customer in customers %}
+                                <tr>
+                                    <td class="relative py-4 pl-4 pr-3 text-sm sm:pl-0">
+                                        <input type="checkbox" name="customer_ids" value="{{ customer.id }}" class="customer-checkbox h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                    </td>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ customer.name }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.phone_number }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.email|default:"-" }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.created_at|date:"M d, Y" }}</td>
+                                    <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                                        <a href="{% url 'customer_detail' customer.id %}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <div class="text-center py-10">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No unassigned customers</h3>
+            <p class="mt-1 text-sm text-gray-500">All customers have been assigned to sales team members.</p>
+            <div class="mt-6">
+                <a href="{% url 'import_file' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <i class="fas fa-file-import mr-2"></i> Import New Customers
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const customerCheckboxes = document.querySelectorAll('.customer-checkbox');
+        const bulkAssignForm = document.getElementById('bulk-assign-form');
+        const randomAssignForm = document.getElementById('random-assign-form');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const isChecked = selectAllCheckbox.checked;
+
+                customerCheckboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+        }
+
+        if (bulkAssignForm) {
+            bulkAssignForm.addEventListener('submit', function(e) {
+                const salesUser = document.getElementById('sales_user').value;
+                const checkedCustomers = document.querySelectorAll('.customer-checkbox:checked');
+
+                if (!salesUser) {
+                    e.preventDefault();
+                    alert('Please select a sales person');
+                    return;
+                }
+
+                if (checkedCustomers.length === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one customer');
+                    return;
+                }
+            });
+        }
+
+        if (randomAssignForm) {
+            randomAssignForm.addEventListener('submit', function(e) {
+                const salesUser = document.getElementById('random_sales_user').value;
+                const count = document.getElementById('count').value;
+
+                if (!salesUser) {
+                    e.preventDefault();
+                    alert('Please select a sales person');
+                    return;
+                }
+
+                if (count < 1) {
+                    e.preventDefault();
+                    alert('Please enter a valid number of customers to assign');
+                    return;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
