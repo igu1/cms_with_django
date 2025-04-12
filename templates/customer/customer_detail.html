@@ -7,7 +7,7 @@
 <div class="mb-6 flex items-center justify-between">
     <div>
         <h1 class="text-2xl font-semibold text-gray-900">{{ customer.name }}</h1>
-        <p class="mt-1 text-sm text-gray-500">Customer details and status history</p>
+        <p class="mt-1 text-sm text-gray-500">Prospective student details and enrollment journey</p>
     </div>
     <div>
         <a href="{% url 'customer_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -20,8 +20,8 @@
     <!-- Customer Information -->
     <div class="bg-white shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Information</h3>
-            <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and contact information.</p>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Student Information</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-500">Personal details and contact information for follow-up.</p>
         </div>
         <div class="border-t border-gray-200">
             <dl>
@@ -42,10 +42,22 @@
                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.address|default:"Not provided" }}</dd>
                 </div>
                 <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Area</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.area|default:"Not provided" }}</dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Date</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.date|date:"F j, Y"|default:"Not provided" }}</dd>
+                </div>
+                <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-500">Current status</dt>
                     <dd class="mt-1 text-sm sm:mt-0 sm:col-span-2">
                         {{ customer.status|status_badge }}
                     </dd>
+                </div>
+                <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Remark</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ customer.remark|default:"Not provided" }}</dd>
                 </div>
                 <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-500">Assigned to</dt>
@@ -77,8 +89,8 @@
     <div class="space-y-5">
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Update Status</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Change the customer's current status.</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Update Enrollment Status</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Track the student's progress to the next stage in their enrollment journey.</p>
             </div>
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <form id="update-status-form" class="space-y-4">
@@ -88,11 +100,17 @@
                         <div class="relative">
                             <select id="status" name="status" class="mt-1 block w-full pl-10 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md appearance-none">
                                 <option value="" disabled {% if not customer.status %}selected{% endif %}>Select Status</option>
-                                <option value="CALLED" {% if customer.status == 'CALLED' %}selected{% endif %} data-icon="fas fa-phone text-blue-500">Called</option>
-                                <option value="NOT_ANSWERED" {% if customer.status == 'NOT_ANSWERED' %}selected{% endif %} data-icon="fas fa-phone-slash text-yellow-500">Not Answered</option>
-                                <option value="INVALID_NUMBER" {% if customer.status == 'INVALID_NUMBER' %}selected{% endif %} data-icon="fas fa-times-circle text-red-500">Invalid Number</option>
+                                <option value="INVALID" {% if customer.status == 'INVALID' %}selected{% endif %} data-icon="fas fa-times-circle text-red-500">Invalid</option>
+                                <option value="VALID" {% if customer.status == 'VALID' %}selected{% endif %} data-icon="fas fa-check-circle text-green-500">Valid</option>
+                                <option value="CALL_NOT_ATTENDED" {% if customer.status == 'CALL_NOT_ATTENDED' %}selected{% endif %} data-icon="fas fa-phone-slash text-yellow-500">Call Not Attended</option>
                                 <option value="PLAN_PRESENTED" {% if customer.status == 'PLAN_PRESENTED' %}selected{% endif %} data-icon="fas fa-file-alt text-purple-500">Plan Presented</option>
+                                <option value="INTERESTED" {% if customer.status == 'INTERESTED' %}selected{% endif %} data-icon="fas fa-thumbs-up text-blue-500">Interested</option>
+                                <option value="NOT_INTERESTED" {% if customer.status == 'NOT_INTERESTED' %}selected{% endif %} data-icon="fas fa-thumbs-down text-gray-500">Not Interested</option>
+                                <option value="FOLLOW_UP" {% if customer.status == 'FOLLOW_UP' %}selected{% endif %} data-icon="fas fa-calendar-check text-indigo-500">Follow Up</option>
                                 <option value="SHORTLISTED" {% if customer.status == 'SHORTLISTED' %}selected{% endif %} data-icon="fas fa-star text-green-500">Shortlisted</option>
+                                <option value="CAMPUS_VISIT" {% if customer.status == 'CAMPUS_VISIT' %}selected{% endif %} data-icon="fas fa-building text-orange-500">Campus Visit</option>
+                                <option value="REGISTRATION" {% if customer.status == 'REGISTRATION' %}selected{% endif %} data-icon="fas fa-clipboard-list text-teal-500">Registration</option>
+                                <option value="ADMISSION" {% if customer.status == 'ADMISSION' %}selected{% endif %} data-icon="fas fa-graduation-cap text-pink-500">Admission</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                                 <span id="status-icon" class="text-gray-500"><i class="fas fa-tag"></i></span>
@@ -119,14 +137,14 @@
         <!-- Assign Customer (Manager Only) -->
         <div class="bg-white shadow overflow-hidden sm:rounded-lg">
             <div class="px-4 py-5 sm:px-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900">Assign Customer</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Assign this customer to a sales person.</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Assign Student</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Assign this prospective student to a Student Counsellor for follow-up.</p>
             </div>
             <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                 <form id="assign-customer-form" class="space-y-4">
                     {% csrf_token %}
                     <div>
-                        <label for="sales_user" class="block text-sm font-medium text-gray-700">Sales Person</label>
+                        <label for="sales_user" class="block text-sm font-medium text-gray-700">Student Counsellor</label>
                         <select id="sales_user" name="sales_user" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                             <option value="">Unassigned</option>
                             {% for user in sales_users %}
@@ -149,8 +167,8 @@
 <!-- Status History -->
 <div class="mt-5 bg-white shadow overflow-hidden sm:rounded-lg">
     <div class="px-4 py-5 sm:px-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">Status History</h3>
-        <p class="mt-1 max-w-2xl text-sm text-gray-500">Record of all status changes.</p>
+        <h3 class="text-lg leading-6 font-medium text-gray-900">Enrollment Journey</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">Track the student's progress through the enrollment process.</p>
     </div>
     <div class="border-t border-gray-200">
         <div class="flow-root">
@@ -233,8 +251,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Reload the page to show updated status
-                        window.location.reload();
+                        window.location.href = "{% url 'customer_list' %}";
                     } else {
                         alert('Error: ' + data.error);
                     }
@@ -262,7 +279,6 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Reload the page to show updated assignment
                         window.location.reload();
                     } else {
                         alert('Error: ' + data.error);

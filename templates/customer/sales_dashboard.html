@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load customer_tags %}
 
-{% block title %}Sales Dashboard - {{ COMPANY_NAME }}{% endblock %}
+{% block title %}Student Counsellor Dashboard - {{ COMPANY_NAME }}{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Sales Dashboard</h1>
-    <p class="mt-1 text-sm text-gray-500">Manage your assigned customers</p>
+    <h1 class="text-2xl font-semibold text-gray-900">Student Counsellor Dashboard</h1>
+    <p class="mt-1 text-sm text-gray-500">Track and manage your assigned prospective students throughout their enrollment journey</p>
 </div>
 
 <!-- Stats Cards -->
@@ -32,23 +32,35 @@
 
     <!-- Status Cards -->
     {% for status, label in statuses %}
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow duration-300">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center">
                 <div class="flex-shrink-0
-                    {% if status == 'CALLED' %}bg-blue-500
-                    {% elif status == 'NOT_ANSWERED' %}bg-yellow-500
-                    {% elif status == 'INVALID_NUMBER' %}bg-red-500
+                    {% if status == 'INVALID' %}bg-red-500
+                    {% elif status == 'VALID' %}bg-green-500
+                    {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
                     {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
+                    {% elif status == 'INTERESTED' %}bg-blue-500
+                    {% elif status == 'NOT_INTERESTED' %}bg-gray-500
+                    {% elif status == 'FOLLOW_UP' %}bg-indigo-500
                     {% elif status == 'SHORTLISTED' %}bg-green-500
+                    {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
+                    {% elif status == 'REGISTRATION' %}bg-teal-500
+                    {% elif status == 'ADMISSION' %}bg-pink-500
                     {% else %}bg-gray-500{% endif %}
                     rounded-md p-3">
                     <i class="
-                        {% if status == 'CALLED' %}fas fa-phone
-                        {% elif status == 'NOT_ANSWERED' %}fas fa-phone-slash
-                        {% elif status == 'INVALID_NUMBER' %}fas fa-times-circle
+                        {% if status == 'INVALID' %}fas fa-times-circle
+                        {% elif status == 'VALID' %}fas fa-check-circle
+                        {% elif status == 'CALL_NOT_ATTENDED' %}fas fa-phone-slash
                         {% elif status == 'PLAN_PRESENTED' %}fas fa-file-alt
+                        {% elif status == 'INTERESTED' %}fas fa-thumbs-up
+                        {% elif status == 'NOT_INTERESTED' %}fas fa-thumbs-down
+                        {% elif status == 'FOLLOW_UP' %}fas fa-calendar-check
                         {% elif status == 'SHORTLISTED' %}fas fa-star
+                        {% elif status == 'CAMPUS_VISIT' %}fas fa-building
+                        {% elif status == 'REGISTRATION' %}fas fa-clipboard-list
+                        {% elif status == 'ADMISSION' %}fas fa-graduation-cap
                         {% else %}fas fa-question{% endif %}
                         text-white"></i>
                 </div>
@@ -56,7 +68,12 @@
                     <dl>
                         <dt class="text-sm font-medium text-gray-500 truncate">{{ label }}</dt>
                         <dd class="flex items-baseline">
-                            <div class="text-2xl font-semibold text-gray-900">{{ status_data|get_item:status|default:0 }}</div>
+                            <div class="text-2xl font-semibold {% if status_data|get_item:status > 0 %}text-gray-900{% else %}text-gray-400{% endif %}">{{ status_data|get_item:status|default:0 }}</div>
+                            {% if status_data|get_item:status > 0 %}
+                            <div class="ml-2">
+                                <a href="{% url 'customer_list' %}?status={{ status }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-500">View</a>
+                            </div>
+                            {% endif %}
                         </dd>
                     </dl>
                 </div>
@@ -83,9 +100,9 @@
                                 </div>
                                 <p class="text-sm text-gray-500">
                                     Status changed from
-                                    <span class="font-medium">{% if activity.previous_status %}{{ activity.previous_status }}{% else %}None{% endif %}</span>
+                                    <span class="font-medium">{% if activity.previous_status %}{{ activity.previous_status|status_badge }}{% else %}<span class="text-gray-500">None</span>{% endif %}</span>
                                     to
-                                    <span class="font-medium">{{ activity.new_status }}</span>
+                                    <span class="font-medium">{{ activity.new_status|status_badge }}</span>
                                 </p>
                                 {% if activity.notes %}
                                 <p class="text-sm text-gray-500">Note: {{ activity.notes }}</p>

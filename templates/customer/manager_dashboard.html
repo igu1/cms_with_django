@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load customer_tags %}
 
-{% block title %}Manager Dashboard - {{ COMPANY_NAME }}{% endblock %}
+{% block title %}Sales Manager Dashboard - {{ COMPANY_NAME }}{% endblock %}
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Manager Dashboard</h1>
-    <p class="mt-1 text-sm text-gray-500">Overview of customer data and sales performance</p>
+    <h1 class="text-2xl font-semibold text-gray-900">Sales Manager Dashboard</h1>
+    <p class="mt-1 text-sm text-gray-500">Overview of customer data and student counsellor performance</p>
 </div>
 
 <!-- Stats Cards -->
@@ -101,31 +101,80 @@
     <div class="bg-white overflow-hidden shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
+            <p class="mt-1 text-sm text-gray-500">Track the progress of your potential students through the enrollment journey</p>
             <div class="mt-4">
                 {% for status, count in status_data.items %}
-                <div class="mb-2">
+                <div class="mb-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             {% if status %}
                                 {% status_icon status %}
                                 <span class="ml-2 text-sm font-medium text-gray-700">
-                                    {% if status == 'CALLED' %}Called
-                                    {% elif status == 'NOT_ANSWERED' %}Not Answered
-                                    {% elif status == 'INVALID_NUMBER' %}Invalid Number
-                                    {% elif status == 'PLAN_PRESENTED' %}Plan Presented
-                                    {% elif status == 'SHORTLISTED' %}Shortlisted
-                                    {% else %}{{ status }}{% endif %}
+                                    {% if status == 'INVALID' %}
+                                        <span class="font-medium">Invalid</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Contact information needs verification</span>
+                                    {% elif status == 'VALID' %}
+                                        <span class="font-medium">Valid</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Contact information verified</span>
+                                    {% elif status == 'CALL_NOT_ATTENDED' %}
+                                        <span class="font-medium">Call Not Attended</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer missed the call</span>
+                                    {% elif status == 'PLAN_PRESENTED' %}
+                                        <span class="font-medium">Plan Presented</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Course details shared with customer</span>
+                                    {% elif status == 'INTERESTED' %}
+                                        <span class="font-medium">Interested</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer showed positive interest</span>
+                                    {% elif status == 'NOT_INTERESTED' %}
+                                        <span class="font-medium">Not Interested</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer declined to proceed</span>
+                                    {% elif status == 'FOLLOW_UP' %}
+                                        <span class="font-medium">Follow Up</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Scheduled for next contact</span>
+                                    {% elif status == 'SHORTLISTED' %}
+                                        <span class="font-medium">Shortlisted</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer shortlisted our institution</span>
+                                    {% elif status == 'CAMPUS_VISIT' %}
+                                        <span class="font-medium">Campus Visit</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer visited or scheduled a visit</span>
+                                    {% elif status == 'REGISTRATION' %}
+                                        <span class="font-medium">Registration</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer registered for a program</span>
+                                    {% elif status == 'ADMISSION' %}
+                                        <span class="font-medium">Admission</span>
+                                        <span class="text-xs text-gray-500 ml-1">- Customer completed admission process</span>
+                                    {% else %}
+                                        {{ status }}
+                                    {% endif %}
                                 </span>
                             {% else %}
                                 <i class="fas fa-question-circle text-gray-500"></i>
                                 <span class="ml-2 text-sm font-medium text-gray-700">No Status</span>
+                                <span class="text-xs text-gray-500 ml-1">- Initial contact pending</span>
                             {% endif %}
                         </div>
-                        <span class="text-sm text-gray-500">{{ count }}</span>
+                        <span class="text-sm font-medium {% if count > 0 %}text-indigo-600{% else %}text-gray-500{% endif %}">{{ count }}</span>
                     </div>
                     <div class="mt-1 relative">
-                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
-                            <div style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center {% if status == 'CALLED' %}bg-blue-500{% elif status == 'NOT_ANSWERED' %}bg-yellow-500{% elif status == 'INVALID_NUMBER' %}bg-red-500{% elif status == 'PLAN_PRESENTED' %}bg-purple-500{% elif status == 'SHORTLISTED' %}bg-green-500{% else %}bg-indigo-500{% endif %}"></div>
+                        <div class="overflow-hidden h-3 text-xs flex rounded bg-gray-200">
+                            <div style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%"
+                                class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center rounded-l
+                                {% if status == 'INVALID' %}bg-red-500
+                                {% elif status == 'VALID' %}bg-green-500
+                                {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
+                                {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
+                                {% elif status == 'INTERESTED' %}bg-blue-500
+                                {% elif status == 'NOT_INTERESTED' %}bg-gray-500
+                                {% elif status == 'FOLLOW_UP' %}bg-indigo-500
+                                {% elif status == 'SHORTLISTED' %}bg-green-500
+                                {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
+                                {% elif status == 'REGISTRATION' %}bg-teal-500
+                                {% elif status == 'ADMISSION' %}bg-pink-500
+                                {% else %}bg-indigo-500{% endif %}">
+                                {% if count > 0 and total_customers > 0 and count|percentage:total_customers > 5 %}
+                                    <span class="px-2">{{ count|percentage:total_customers|floatformat:1 }}%</span>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>

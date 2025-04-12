@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 from django.utils import timezone
 from django.db import transaction
 from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory, CustomerField, ColumnMapping, MappingField
+from .forms import CustomerForm, CustomerStatusForm, CustomerAssignForm
 import pandas as pd
 import uuid
 import os
@@ -83,8 +84,14 @@ def manager_dashboard(request):
     assigned_customers = Customer.objects.filter(assigned_to__isnull=False).count()
     unassigned_customers = Customer.objects.filter(assigned_to__isnull=True).count()
 
+    # Get counts for each status
     status_counts = Customer.objects.values('status').annotate(count=Count('status'))
     status_data = {status['status']: status['count'] for status in status_counts}
+
+    # Make sure all statuses are represented in the data, even if count is 0
+    for status in CustomerStatus.values:
+        if status not in status_data:
+            status_data[status] = 0
 
     recent_imports = FileImport.objects.all()[:5]
 
@@ -124,8 +131,17 @@ def sales_dashboard(request):
     assigned_customers = Customer.objects.filter(assigned_to=request.user)
     total_assigned = assigned_customers.count()
 
+    # Get counts for each status
     status_counts = assigned_customers.values('status').annotate(count=Count('status'))
     status_data = {status['status']: status['count'] for status in status_counts}
+
+    # Make sure all statuses are represented in the data, even if count is 0
+    for status in CustomerStatus.values:
+        if status not in status_data:
+            status_data[status] = 0
+
+    # Prepare status choices for the template
+    statuses = [(status, label) for status, label in CustomerStatus.choices]
 
     recent_activity = CustomerStatusHistory.objects.filter(
         changed_by=request.user
@@ -135,7 +151,8 @@ def sales_dashboard(request):
         'total_assigned': total_assigned,
         'status_data': status_data,
         'recent_activity': recent_activity,
-        'assigned_customers': assigned_customers[:10]
+        'assigned_customers': assigned_customers[:10],
+        'statuses': statuses
     }
 
     return render(request, 'customer/sales_dashboard.html', context)
@@ -545,10 +562,17 @@ def customer_detail(request, customer_id):
 
     status_history = customer.status_history.all().order_by('-changed_at')
 
+    # Initialize forms
+    status_form = CustomerStatusForm(initial={'status': customer.status})
+    assign_form = CustomerAssignForm(initial={'assigned_to': customer.assigned_to})
+
     context = {
         'customer': customer,
         'status_history': status_history,
-        'statuses': CustomerStatus.choices
+        'statuses': CustomerStatus.choices,
+        'status_form': status_form,
+        'assign_form': assign_form,
+        'sales_users': User.objects.filter(role=User.SALES)
     }
 
     return render(request, 'customer/customer_detail.html', context)
@@ -564,8 +588,12 @@ def update_customer_status(request, customer_id):
     if not request.user.is_manager() and customer.assigned_to != request.user:
         return JsonResponse({'error': 'Permission denied'}, status=403)
 
-    new_status = request.POST.get('status')
-    notes = request.POST.get('notes', '')
+    form = CustomerStatusForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'error': 'Invalid form data'}, status=400)
+
+    new_status = form.cleaned_data['status']
+    notes = form.cleaned_data['notes']
 
     if not new_status or new_status not in dict(CustomerStatus.choices):
         return JsonResponse({'error': 'Invalid status'}, status=400)

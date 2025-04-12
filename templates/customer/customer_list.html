@@ -5,8 +5,8 @@
 
 {% block content %}
 <div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Customers</h1>
-    <p class="mt-1 text-sm text-gray-500">Manage customer information and status</p>
+    <h1 class="text-2xl font-semibold text-gray-900">Prospective Students</h1>
+    <p class="mt-1 text-sm text-gray-500">Track and manage potential students throughout their enrollment journey</p>
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -16,7 +16,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                 <div>
                     <form method="GET" class="flex rounded-md shadow-sm">
-                        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search by name, phone, email..." class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search by name, phone, area..." class="focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
                         <button type="submit" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                             <i class="fas fa-search"></i>
                         </button>
@@ -24,7 +24,7 @@
                 </div>
                 <div>
                     <select id="status-filter" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                        <option value="all" {% if not current_status %}selected{% endif %}>All Statuses</option>
+                        <option value="all" {% if not current_status %}selected{% endif %}>All Enrollment Stages</option>
                         {% for status, label in statuses %}
                         <option value="{{ status }}" {% if current_status == status %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
@@ -49,7 +49,8 @@
                             <tr>
                                 <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Name</th>
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Phone</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Email</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Area</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
                                 {% if user.is_manager %}
                                 <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Assigned To</th>
                                 {% endif %}
@@ -64,7 +65,8 @@
                             <tr>
                                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ customer.name }}</td>
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.phone_number }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.email|default:"-" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.area|default:"-" }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ customer.date|date:"d/m/Y"|default:"-" }}</td>
                                 {% if user.is_manager %}
                                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                     {% if customer.assigned_to %}
@@ -83,7 +85,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="{% if user.is_manager %}6{% else %}5{% endif %}" class="py-4 text-sm text-gray-500 text-center">No customers found</td>
+                                <td colspan="{% if user.is_manager %}7{% else %}6{% endif %}" class="py-4 text-sm text-gray-500 text-center">No customers found</td>
                             </tr>
                             {% endfor %}
                         </tbody>

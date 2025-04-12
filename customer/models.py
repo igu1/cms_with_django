@@ -11,8 +11,8 @@ class User(AbstractUser):
     SALES = 'sales'
 
     ROLE_CHOICES = [
-        (MANAGER, 'Manager'),
-        (SALES, 'Sales'),
+        (MANAGER, 'Sales Manager'),
+        (SALES, 'Student Counsellor'),
     ]
 
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default=SALES)
@@ -39,11 +39,17 @@ class User(AbstractUser):
         return self.role == self.SALES
 
 class CustomerStatus(models.TextChoices):
-    CALLED = 'CALLED', _('Called')
-    NOT_ANSWERED = 'NOT_ANSWERED', _('Not Answered')
-    INVALID_NUMBER = 'INVALID_NUMBER', _('Invalid Number')
+    INVALID = 'INVALID', _('Invalid')
+    VALID = 'VALID', _('Valid')
+    CALL_NOT_ATTENDED = 'CALL_NOT_ATTENDED', _('Call Not Attended')
     PLAN_PRESENTED = 'PLAN_PRESENTED', _('Plan Presented')
+    INTERESTED = 'INTERESTED', _('Interested')
+    NOT_INTERESTED = 'NOT_INTERESTED', _('Not Interested')
+    FOLLOW_UP = 'FOLLOW_UP', _('Follow Up')
     SHORTLISTED = 'SHORTLISTED', _('Shortlisted')
+    CAMPUS_VISIT = 'CAMPUS_VISIT', _('Campus Visit')
+    REGISTRATION = 'REGISTRATION', _('Registration')
+    ADMISSION = 'ADMISSION', _('Admission')
 
 class FieldType(models.TextChoices):
     TEXT = 'TEXT', _('Text')
@@ -85,6 +91,9 @@ class Customer(models.Model):
     phone_number = models.CharField(max_length=20)
     email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    area = models.CharField(max_length=255, blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    remark = models.TextField(blank=True, null=True)
     assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_customers')
     status = models.CharField(
         max_length=20,

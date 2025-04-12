@@ -1,4 +1,4 @@
-# Customer Management System
+# Customer Management System (Django)
 
 ## Overview
 
@@ -111,6 +111,70 @@ The system accepts CSV and XLSX files with the following columns:
 - `email` (optional): Customer's email address
 - `address` (optional): Customer's address
 
+## Management Commands
+
+The system includes several useful management commands:
+
+1. `import_sample_csv`: Imports sample customer data from CSV
+   ```bash
+   python manage.py import_sample_csv sample_indian_customers.csv
+   ```
+
+2. `create_sample_data`: Generates random sample customer data
+   ```bash
+   python manage.py create_sample_data 100  # Creates 100 sample customers
+   ```
+
+3. `assign_random_customers`: Randomly assigns customers to sales users
+   ```bash
+   python manage.py assign_random_customers
+   ```
+
+## Configuration
+
+Key configuration options in `core/settings.py`:
+
+- `LOGIN_REDIRECT_URL`: Where users are redirected after login
+- `LOGOUT_REDIRECT_URL`: Where users are redirected after logout
+- `MEDIA_ROOT`: Location for uploaded files
+- `STATIC_ROOT`: Location for collected static files
+
+## API Documentation
+
+The system provides REST API endpoints (via Django views):
+
+- `/api/customers/`: List all customers (manager only)
+- `/api/customers/<id>/`: Get customer details
+- `/api/customers/import/`: Import customer data (POST)
+- `/api/customers/status/`: Update customer status (POST)
+
+## Testing
+
+To run tests:
+```bash
+python manage.py test customer
+```
+
+Key test cases:
+- User authentication and authorization
+- Customer import functionality
+- Status update workflow
+- Role-based access control
+
+## Screenshots
+
+![Login Page](screenshots/login.png)
+![Manager Dashboard](screenshots/manager_dashboard.png)
+![Sales Dashboard](screenshots/sales_dashboard.png)
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/fooBar`)
+3. Commit your changes (`git commit -am 'Add some fooBar'`)
+4. Push to the branch (`git push origin feature/fooBar`)
+5. Create a new Pull Request

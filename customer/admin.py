@@ -48,9 +48,9 @@ class ColumnMappingAdmin(admin.ModelAdmin):
     field_count.short_description = 'Fields'
 
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'phone_number', 'email', 'assigned_to', 'status', 'created_at', 'custom_fields')
-    list_filter = ('status', 'assigned_to')
-    search_fields = ('name', 'phone_number', 'email')
+    list_display = ('name', 'phone_number', 'area', 'date', 'status', 'assigned_to', 'created_at', 'custom_fields')
+    list_filter = ('status', 'assigned_to', 'date')
+    search_fields = ('name', 'phone_number', 'email', 'area')
     date_hierarchy = 'created_at'
     readonly_fields = ('custom_data_display',)
 
@@ -75,7 +75,7 @@ class CustomerAdmin(admin.ModelAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
             (None, {
-                'fields': ('name', 'phone_number', 'email', 'address', 'assigned_to', 'status', 'notes')
+                'fields': ('name', 'phone_number', 'email', 'address', 'area', 'date', 'status', 'assigned_to', 'remark', 'notes')
             }),
         ]
 
