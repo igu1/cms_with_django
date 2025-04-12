@@ -1,1 +1,0 @@
-Project Amount: 10k
