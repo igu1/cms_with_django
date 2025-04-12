@@ -10,13 +10,14 @@ A web-based software application designed to import, read, and manage preformatt
 - **File Importing**: Simple and effective functionality for uploading preformatted XLSX and CSV files to the database
 - **Dashboard Interface**: Intuitive dashboards for managers and sales staff displaying relevant metrics and statuses
 - **Dynamic Data Access**: Role-based access allows users to view only the data assigned to them
-- **Status Management**: Sales users can set customer status from predefined options (CALLED, NOT ANSWERED, INVALID NUMBER, PLAN PRESENTED, SHORTLISTED)
+- **Status Management**: Student Counsellors can set customer status from predefined options (INVALID, VALID, CALL_NOT_ATTENDED, PLAN_PRESENTED, INTERESTED, NOT_INTERESTED, FOLLOW_UP, SHORTLISTED, CAMPUS_VISIT, REGISTRATION, ADMISSION)
 
 ## Technical Stack
 
 - **Frontend**: Django Templates with Tailwind CSS
 - **Backend**: Django 4.2
 - **Database**: SQLite (default), PostgreSQL (Docker)
+- **Deployment**: Vercel
 
 ## Installation and Setup
 
@@ -92,13 +93,13 @@ A web-based software application designed to import, read, and manage preformatt
 
 ## User Roles
 
-### Manager
+### Sales Manager
 - Can import customer data via CSV/XLSX files
 - Can view all customers in the system
-- Can assign customers to sales users
-- Can view performance metrics of sales users
+- Can assign customers to Student Counsellors
+- Can view performance metrics of Student Counsellors
 
-### Sales
+### Student Counsellor
 - Can view only assigned customers
 - Can update customer status
 - Can add notes to customer records
@@ -108,8 +109,9 @@ A web-based software application designed to import, read, and manage preformatt
 The system accepts CSV and XLSX files with the following columns:
 - `name` (required): Customer's full name
 - `phone_number` (required): Customer's phone number
-- `email` (optional): Customer's email address
-- `address` (optional): Customer's address
+- `area` (optional): Customer's area/location
+- `date` (optional): Date in YYYY-MM-DD format
+- `remark` (optional): Additional remarks
 
 ## Management Commands
 
@@ -138,6 +140,29 @@ Key configuration options in `core/settings.py`:
 - `LOGOUT_REDIRECT_URL`: Where users are redirected after logout
 - `MEDIA_ROOT`: Location for uploaded files
 - `STATIC_ROOT`: Location for collected static files
+
+## Vercel Deployment
+
+1. Install Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+
+2. Login to Vercel:
+   ```bash
+   vercel login
+   ```
+
+3. Deploy the application:
+   ```bash
+   vercel
+   ```
+
+4. Set up environment variables in the Vercel dashboard:
+   - `SECRET_KEY`: Your Django secret key
+   - `DATABASE_URL`: Your PostgreSQL connection string
+   - `ALLOWED_HOSTS`: Add your Vercel domain
+   - `COMPANY_NAME`: alims.co.in
 
 ## API Documentation
 

@@ -3,19 +3,24 @@ version: '3.8'
 services:
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
       - "8000:8000"
     environment:
-      - DEBUG=1
-      - SECRET_KEY=dev_secret_key
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/customer_management
+      - DEBUG=False
+      - COMPANY_NAME=alims.co.in
+      - SECRET_KEY=${SECRET_KEY:-dev_secret_key}
+      - ALLOWED_HOSTS=localhost,127.0.0.1
     depends_on:
       - db
 
   db:
-    image: postgres:13
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:

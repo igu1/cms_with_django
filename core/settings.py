@@ -1,6 +1,7 @@
 
 from pathlib import Path
 import os
+import dj_database_url
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -34,11 +35,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'whitenoise.runserver_nostatic',
     'customer',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,16 +75,23 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# Database configuration with dj-database-url
+# https://github.com/jazzband/dj-database-url
+
+# Default to SQLite for local development if DATABASE_URL is not set
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
-        'NAME': os.getenv('DB_NAME', BASE_DIR / 'db.sqlite3'),
-        'USER': os.getenv('DB_USER', ''),
-        'PASSWORD': os.getenv('DB_PASSWORD', ''),
-        'HOST': os.getenv('DB_HOST', ''),
-        'PORT': os.getenv('DB_PORT', ''),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Update database configuration from DATABASE_URL environment variable if available
+if os.getenv('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.config(
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
 
 # Password validation
@@ -121,6 +131,9 @@ USE_TZ = True
 STATIC_URL = os.getenv('STATIC_URL', 'static/')
 STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# WhiteNoise configuration for static files
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')

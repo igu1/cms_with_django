@@ -45,5 +45,9 @@ Thumbs.db
 docker-compose.override.yml
 
 # Database migrations (except initial)
-customer/migrations/*
-!customer/migrations/__init__.py
+# customer/migrations/*
+# !customer/migrations/__init__.py
+
+# Vercel
+.vercel
+.now
