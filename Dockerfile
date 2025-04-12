@@ -16,7 +16,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
+# Set environment variables from .env file if it exists
+RUN if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs); fi
+
+# Only run collectstatic if not in debug mode
+RUN if [ "$DEBUG" != "True" ]; then python manage.py collectstatic --noinput; fi
 
 EXPOSE 8000
 

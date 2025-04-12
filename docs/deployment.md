@@ -45,7 +45,13 @@ Before deploying, ensure you have:
    SECRET_KEY=your_secure_secret_key
    ALLOWED_HOSTS=your-domain.com,www.your-domain.com
    COMPANY_NAME=alims.co.in
-   DATABASE_URL=postgres://username:password@db:5432/customer_management
+   # The DATABASE_URL will be set by docker-compose.yml
+   # Configure other database settings if needed
+   DB_NAME=customer_management
+   DB_USER=postgres
+   DB_PASSWORD=postgres
+   DB_HOST=db
+   DB_PORT=5432
    ```
 
 4. Build and start the containers:
@@ -286,7 +292,7 @@ To update the deployment:
         server_name your-domain.com www.your-domain.com;
 
         location = /favicon.ico { access_log off; log_not_found off; }
-        
+
         location /static/ {
             root /path/to/customer-management;
         }

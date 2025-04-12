@@ -65,22 +65,27 @@ Before you begin, ensure you have the following installed:
 
 ### Docker Setup
 
-1. Build and start the containers:
+1. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Update the values as needed
+   - The Docker setup will automatically use the `.env` file for configuration
+
+2. Build and start the containers:
    ```bash
    docker-compose up -d
    ```
 
-2. Run migrations:
+3. Run migrations:
    ```bash
    docker-compose exec web python manage.py migrate
    ```
 
-3. Create a superuser:
+4. Create a superuser:
    ```bash
    docker-compose exec web python manage.py createsuperuser
    ```
 
-4. Access the application at http://localhost:8000/
+5. Access the application at http://localhost:8010/
 
 ## Configuration
 
