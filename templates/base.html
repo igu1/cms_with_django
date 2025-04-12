@@ -34,16 +34,10 @@
                             <i class="fas fa-user-plus mr-3"></i>
                             Assign Customers
                         </a>
-                        <div class="space-y-1">
-                            <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path and 'mappings' not in request.path %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
-                                <i class="fas fa-file-import mr-3"></i>
-                                Import Data
-                            </a>
-                            <a href="{% url 'mapping_list' %}" class="{% if 'mappings' in request.path %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center pl-8 py-2 text-sm font-medium rounded-md">
-                                <i class="fas fa-columns mr-3"></i>
-                                Column Mappings
-                            </a>
-                        </div>
+                        <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                            <i class="fas fa-file-import mr-3"></i>
+                            Import Data
+                        </a>
                         <a href="{% url 'import_history' %}" class="{% if 'history' in request.path %}bg-gray-900 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} group flex items-center px-2 py-2 text-sm font-medium rounded-md">
                             <i class="fas fa-history mr-3"></i>
                             Import History

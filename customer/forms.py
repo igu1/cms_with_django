@@ -6,15 +6,14 @@ class CustomerForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'type': 'date'}),
         required=False
     )
-    
+
     class Meta:
         model = Customer
-        fields = ['name', 'phone_number', 'email', 'address', 'area', 'date', 'status', 'remark', 'notes']
+        fields = ['name', 'phone_number', 'area', 'date', 'status', 'remark', 'notes']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
             'phone_number': forms.TextInput(attrs={'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
-            'email': forms.EmailInput(attrs={'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
-            'address': forms.Textarea(attrs={'rows': 3, 'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
+
             'area': forms.TextInput(attrs={'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
             'status': forms.Select(attrs={'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
             'remark': forms.Textarea(attrs={'rows': 2, 'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'}),
