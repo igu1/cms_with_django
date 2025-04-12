@@ -1,0 +1,132 @@
+/* Custom CSS for Jazzmin admin theme */
+
+:root {
+  --primary-color: #1d3362;
+  --primary-hover: #152548;
+  --white-color: #ffffff;
+}
+
+/* Override primary color */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+.navbar-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.sidebar-dark-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.sidebar-dark-primary .nav-sidebar > .nav-item > .nav-link.active {
+  background-color: var(--primary-hover) !important;
+}
+
+.page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.page-link {
+  color: var(--primary-color) !important;
+}
+
+.page-link:hover {
+  color: var(--primary-hover) !important;
+}
+
+.nav-pills .nav-link.active, 
+.nav-pills .show > .nav-link {
+  background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+a {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+  background-color: var(--primary-color) !important;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.badge-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.card-primary:not(.card-outline) > .card-header {
+  background-color: var(--primary-color) !important;
+}
+
+.card-primary.card-outline {
+  border-top: 3px solid var(--primary-color) !important;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+  background-color: var(--primary-color) !important;
+}
+
+.dropdown-item.active, 
+.dropdown-item:active {
+  background-color: var(--primary-color) !important;
+}
+
+/* Logo styling */
+.brand-link {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0.8rem 0.5rem !important;
+}
+
+.brand-image {
+  margin-right: 0.5rem !important;
+}
+
+/* Custom status badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.status-badge i {
+  margin-right: 0.25rem;
+}
