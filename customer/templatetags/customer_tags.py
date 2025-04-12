@@ -4,6 +4,16 @@ from django.utils.safestring import mark_safe
 register = template.Library()
 
 @register.filter
+def endswith(value, arg):
+    """
+    Check if a string ends with the specified argument
+    Usage: {{ value|endswith:arg }}
+    """
+    if value is None:
+        return False
+    return value.endswith(arg)
+
+@register.filter
 def get_item(dictionary, key):
     """
     Get an item from a dictionary using a key.

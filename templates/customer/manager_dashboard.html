@@ -3,16 +3,16 @@
 
 {% block title %}Sales Manager Dashboard - {{ COMPANY_NAME }}{% endblock %}
 
-{% block content %}
-<div class="mb-6">
-    <h1 class="text-2xl font-semibold text-gray-900">Sales Manager Dashboard</h1>
-    <p class="mt-1 text-sm text-gray-500">Overview of customer data and student counsellor performance</p>
-</div>
+{% block header %}Sales Manager Dashboard{% endblock %}
+{% block header_icon %}<i class="fas fa-chart-line"></i>{% endblock %}
+{% block subheader %}Overview of customer data and student counsellor performance{% endblock %}
 
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+{% block content %}
+
+<!-- Analytics Overview -->
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
     <!-- Total Customers -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
@@ -23,6 +23,9 @@
                         <dt class="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
                         <dd class="flex items-baseline">
                             <div class="text-2xl font-semibold text-gray-900">{{ total_customers }}</div>
+                            <div class="ml-2">
+                                <span class="text-xs px-2 py-1 rounded-full {% if total_customers > 100 %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">{{ total_customers|default:0|add:0|floatformat:0 }}</span>
+                            </div>
                         </dd>
                     </dl>
                 </div>
@@ -31,7 +34,7 @@
     </div>
 
     <!-- Assigned Customers -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
@@ -42,6 +45,9 @@
                         <dt class="text-sm font-medium text-gray-500 truncate">Assigned Customers</dt>
                         <dd class="flex items-baseline">
                             <div class="text-2xl font-semibold text-gray-900">{{ assigned_customers }}</div>
+                            <div class="ml-2">
+                                <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">{{ assigned_customers|percentage:total_customers|floatformat:1 }}%</span>
+                            </div>
                         </dd>
                     </dl>
                 </div>
@@ -50,7 +56,7 @@
     </div>
 
     <!-- Unassigned Customers -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center">
                 <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
@@ -63,7 +69,11 @@
                             <div class="text-2xl font-semibold text-gray-900">{{ unassigned_customers }}</div>
                             {% if unassigned_customers > 0 %}
                             <div class="ml-2">
-                                <a href="{% url 'unassigned_customers' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Assign</a>
+                                <a href="{% url 'unassigned_customers' %}" class="btn-enhanced btn-primary text-xs px-2 py-1 rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">Assign</a>
+                            </div>
+                            {% else %}
+                            <div class="ml-2">
+                                <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">All Assigned</span>
                             </div>
                             {% endif %}
                         </dd>
@@ -73,20 +83,20 @@
         </div>
     </div>
 
-    <!-- Import Data -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <!-- Conversion Rate -->
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center">
-                <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                    <i class="fas fa-file-import text-white"></i>
+                <div class="flex-shrink-0 bg-pink-500 rounded-md p-3">
+                    <i class="fas fa-graduation-cap text-white"></i>
                 </div>
                 <div class="ml-5 w-0 flex-1">
                     <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Import Data</dt>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Conversion Rate</dt>
                         <dd class="flex items-baseline">
-                            <div class="text-lg font-medium text-gray-900">Upload new customer data</div>
+                            <div class="text-2xl font-semibold text-gray-900">{{ status_data.ADMISSION|default:0 }}</div>
                             <div class="ml-2">
-                                <a href="{% url 'import_file' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Import</a>
+                                <span class="text-xs px-2 py-1 rounded-full bg-pink-100 text-pink-800">{{ status_data.ADMISSION|default:0|percentage:total_customers|floatformat:1 }}%</span>
                             </div>
                         </dd>
                     </dl>
@@ -96,13 +106,26 @@
     </div>
 </div>
 
-<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
     <!-- Status Distribution -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
-            <p class="mt-1 text-sm text-gray-500">Track the progress of your potential students through the enrollment journey</p>
-            <div class="mt-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
+                    <p class="mt-1 text-sm text-gray-500">Track the progress of your potential students through the enrollment journey</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="view-as-chart" class="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-200">
+                        <i class="fas fa-chart-pie mr-1"></i> Chart
+                    </button>
+                    <button id="view-as-bars" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
+                        <i class="fas fa-bars mr-1"></i> Bars
+                    </button>
+                </div>
+            </div>
+            <div id="status-chart" class="hidden h-64 mb-4"></div>
+            <div id="status-bars" class="mt-4">
                 {% for status, count in status_data.items %}
                 <div class="mb-3">
                     <div class="flex items-center justify-between">
@@ -186,37 +209,96 @@
     </div>
 
     <!-- Recent Imports -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
+    <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Imports</h3>
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Imports</h3>
+                    <p class="mt-1 text-sm text-gray-500">Latest customer data imports</p>
+                </div>
+                <a href="{% url 'import_file' %}" class="btn-enhanced btn-primary text-xs px-3 py-1 rounded-md text-white bg-indigo-600 hover:bg-indigo-700 transition-colors duration-200">
+                    <i class="fas fa-file-import mr-1"></i> Import New Data
+                </a>
+            </div>
             <div class="mt-4 flow-root">
                 <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                        <table class="min-w-full divide-y divide-gray-300">
+                        <table class="table-enhanced min-w-full divide-y divide-gray-300">
                             <thead>
                                 <tr>
-                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">File Name</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
-                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Records</th>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-file text-indigo-400 mr-2"></i>
+                                            <span>File Name</span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calendar-alt text-indigo-400 mr-2"></i>
+                                            <span>Date</span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-list-ol text-indigo-400 mr-2"></i>
+                                            <span>Records</span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-chart-pie text-indigo-400 mr-2"></i>
+                                            <span>Success Rate</span>
+                                        </div>
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200">
                                 {% for import in recent_imports %}
-                                <tr>
-                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ import.file_name }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.imported_at|date:"M d, Y" }}</td>
-                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.successful_records }}/{{ import.total_records }}</td>
+                                <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                                        <div class="flex items-center">
+                                            <i class="fas {% if import.file_name|lower|endswith:'.xlsx' %}fa-file-excel text-green-500{% elif import.file_name|lower|endswith:'.csv' %}fa-file-csv text-blue-500{% else %}fa-file text-gray-500{% endif %} mr-2"></i>
+                                            <span>{{ import.file_name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock text-gray-400 mr-2"></i>
+                                            <span>{{ import.imported_at|date:"M d, Y" }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                        <span class="font-medium">{{ import.successful_records }}</span>
+                                        <span class="text-gray-400">/</span>
+                                        <span>{{ import.total_records }}</span>
+                                    </td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                        {% with success_rate=import.successful_records|percentage:import.total_records %}
+                                        <div class="w-24 bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                            <div class="{% if success_rate >= 90 %}bg-green-500{% elif success_rate >= 70 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-2.5 rounded-full" style="width: {{ success_rate|floatformat:0 }}%"></div>
+                                        </div>
+                                        <span class="text-xs mt-1 inline-block {% if success_rate >= 90 %}text-green-600{% elif success_rate >= 70 %}text-yellow-600{% else %}text-red-600{% endif %}">{{ success_rate|floatformat:1 }}%</span>
+                                        {% endwith %}
+                                    </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="3" class="py-4 text-sm text-gray-500 text-center">No recent imports</td>
+                                    <td colspan="4" class="py-8 text-sm text-gray-500 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <i class="fas fa-file-import text-gray-300 text-4xl mb-3"></i>
+                                            <p>No import history found</p>
+                                            <a href="{% url 'import_file' %}" class="mt-2 text-indigo-600 hover:text-indigo-800 transition-colors duration-200">Import your first file</a>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                         {% if recent_imports %}
                         <div class="mt-4 text-right">
-                            <a href="{% url 'import_history' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View all imports</a>
+                            <a href="{% url 'import_history' %}" class="btn-enhanced inline-flex items-center px-3 py-1 text-sm font-medium rounded-md text-indigo-600 hover:text-indigo-800 transition-colors duration-200">
+                                <i class="fas fa-history mr-1"></i> View all imports
+                            </a>
                         </div>
                         {% endif %}
                     </div>
@@ -226,39 +308,124 @@
     </div>
 </div>
 
-<!-- Sales Performance -->
-<div class="mt-5 bg-white overflow-hidden shadow rounded-lg">
+<!-- Student Counsellor Performance -->
+<div class="mt-8 card-enhanced bg-white overflow-hidden rounded-lg">
     <div class="px-4 py-5 sm:p-6">
-        <h3 class="text-lg leading-6 font-medium text-gray-900">Sales Team Performance</h3>
-        <div class="mt-4 flow-root">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Student Counsellor Performance</h3>
+                <p class="mt-1 text-sm text-gray-500">Track the performance of your student counsellors</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="view-performance-chart" class="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-200">
+                    <i class="fas fa-chart-bar mr-1"></i> Chart View
+                </button>
+                <button id="view-performance-table" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
+                    <i class="fas fa-table mr-1"></i> Table View
+                </button>
+            </div>
+        </div>
+        <div id="performance-chart" class="hidden h-64 mb-4"></div>
+        <div id="performance-table" class="mt-4 flow-root">
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <table class="min-w-full divide-y divide-gray-300">
+                    <table class="table-enhanced min-w-full divide-y divide-gray-300">
                         <thead>
                             <tr>
-                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Sales Person</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Assigned</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Called</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Not Answered</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Invalid Number</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Plan Presented</th>
-                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Shortlisted</th>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-tie text-indigo-400 mr-2"></i>
+                                        <span>Student Counsellor</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-users text-indigo-400 mr-2"></i>
+                                        <span>Assigned</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-phone text-indigo-400 mr-2"></i>
+                                        <span>Called</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-phone-slash text-indigo-400 mr-2"></i>
+                                        <span>Not Answered</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-times-circle text-indigo-400 mr-2"></i>
+                                        <span>Invalid</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-indigo-400 mr-2"></i>
+                                        <span>Plan Presented</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-star text-indigo-400 mr-2"></i>
+                                        <span>Shortlisted</span>
+                                    </div>
+                                </th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-graduation-cap text-indigo-400 mr-2"></i>
+                                        <span>Admissions</span>
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200">
                             {% for performance in sales_performance %}
-                            <tr>
-                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ performance.user.get_full_name|default:performance.user.username }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.assigned_count }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.CALLED|default:0 }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.NOT_ANSWERED|default:0 }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.INVALID_NUMBER|default:0 }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.PLAN_PRESENTED|default:0 }}</td>
-                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.SHORTLISTED|default:0 }}</td>
+                            <tr class="hover:bg-gray-50 transition-colors duration-150">
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold">
+                                            {{ performance.user.get_full_name|default:performance.user.username|slice:":1"|upper }}
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="font-medium">{{ performance.user.get_full_name|default:performance.user.username }}</div>
+                                            <div class="text-xs text-gray-500">Student Counsellor</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">{{ performance.assigned_count }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ performance.status_counts.CALLED|default:0 }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">{{ performance.status_counts.NOT_ANSWERED|default:0 }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">{{ performance.status_counts.INVALID_NUMBER|default:0 }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">{{ performance.status_counts.PLAN_PRESENTED|default:0 }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">{{ performance.status_counts.SHORTLISTED|default:0 }}</span>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-pink-100 text-pink-800">{{ performance.status_counts.ADMISSION|default:0 }}</span>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="py-4 text-sm text-gray-500 text-center">No sales team members</td>
+                                <td colspan="8" class="py-8 text-sm text-gray-500 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <i class="fas fa-user-tie text-gray-300 text-4xl mb-3"></i>
+                                        <p>No student counsellors found</p>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -268,4 +435,229 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Distribution Chart
+        const viewAsChartBtn = document.getElementById('view-as-chart');
+        const viewAsBarsBtn = document.getElementById('view-as-bars');
+        const statusChartDiv = document.getElementById('status-chart');
+        const statusBarsDiv = document.getElementById('status-bars');
+
+        if (viewAsChartBtn && viewAsBarsBtn) {
+            viewAsChartBtn.addEventListener('click', function() {
+                statusChartDiv.classList.remove('hidden');
+                statusBarsDiv.classList.add('hidden');
+                viewAsChartBtn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                viewAsChartBtn.classList.add('bg-indigo-600', 'text-white');
+                viewAsBarsBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewAsBarsBtn.classList.add('bg-gray-100', 'text-gray-700');
+
+                // Initialize chart if not already done
+                if (!window.statusChart) {
+                    initStatusChart();
+                }
+            });
+
+            viewAsBarsBtn.addEventListener('click', function() {
+                statusChartDiv.classList.add('hidden');
+                statusBarsDiv.classList.remove('hidden');
+                viewAsBarsBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewAsBarsBtn.classList.add('bg-indigo-600', 'text-white');
+                viewAsChartBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewAsChartBtn.classList.add('bg-indigo-100', 'text-indigo-700');
+            });
+        }
+
+        // Performance Chart
+        const viewPerformanceChartBtn = document.getElementById('view-performance-chart');
+        const viewPerformanceTableBtn = document.getElementById('view-performance-table');
+        const performanceChartDiv = document.getElementById('performance-chart');
+        const performanceTableDiv = document.getElementById('performance-table');
+
+        if (viewPerformanceChartBtn && viewPerformanceTableBtn) {
+            viewPerformanceChartBtn.addEventListener('click', function() {
+                performanceChartDiv.classList.remove('hidden');
+                performanceTableDiv.classList.add('hidden');
+                viewPerformanceChartBtn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                viewPerformanceChartBtn.classList.add('bg-indigo-600', 'text-white');
+                viewPerformanceTableBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewPerformanceTableBtn.classList.add('bg-gray-100', 'text-gray-700');
+
+                // Initialize chart if not already done
+                if (!window.performanceChart) {
+                    initPerformanceChart();
+                }
+            });
+
+            viewPerformanceTableBtn.addEventListener('click', function() {
+                performanceChartDiv.classList.add('hidden');
+                performanceTableDiv.classList.remove('hidden');
+                viewPerformanceTableBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewPerformanceTableBtn.classList.add('bg-indigo-600', 'text-white');
+                viewPerformanceChartBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewPerformanceChartBtn.classList.add('bg-indigo-100', 'text-indigo-700');
+            });
+        }
+
+        // Initialize Status Chart
+        function initStatusChart() {
+            const ctx = document.getElementById('status-chart').getContext('2d');
+
+            // Extract data from the DOM
+            const statusData = {};
+            const statusColors = {};
+
+            document.querySelectorAll('#status-bars .mb-3').forEach(item => {
+                const statusText = item.querySelector('.flex.items-center span.font-medium')?.textContent.trim();
+                const countText = item.querySelector('.text-sm.font-medium')?.textContent.trim();
+
+                if (statusText && countText) {
+                    statusData[statusText] = parseInt(countText, 10) || 0;
+
+                    // Extract color from the progress bar
+                    const progressBar = item.querySelector('.overflow-hidden .flex');
+                    if (progressBar) {
+                        const classList = Array.from(progressBar.classList);
+                        let bgColor = 'rgb(79, 70, 229)'; // Default indigo color
+
+                        if (classList.includes('bg-red-500')) bgColor = 'rgb(239, 68, 68)';
+                        else if (classList.includes('bg-green-500')) bgColor = 'rgb(16, 185, 129)';
+                        else if (classList.includes('bg-yellow-500')) bgColor = 'rgb(245, 158, 11)';
+                        else if (classList.includes('bg-purple-500')) bgColor = 'rgb(168, 85, 247)';
+                        else if (classList.includes('bg-blue-500')) bgColor = 'rgb(59, 130, 246)';
+                        else if (classList.includes('bg-gray-500')) bgColor = 'rgb(107, 114, 128)';
+                        else if (classList.includes('bg-indigo-500')) bgColor = 'rgb(79, 70, 229)';
+                        else if (classList.includes('bg-orange-500')) bgColor = 'rgb(249, 115, 22)';
+                        else if (classList.includes('bg-teal-500')) bgColor = 'rgb(20, 184, 166)';
+                        else if (classList.includes('bg-pink-500')) bgColor = 'rgb(236, 72, 153)';
+
+                        statusColors[statusText] = bgColor;
+                    }
+                }
+            });
+
+            // Create chart
+            window.statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusData),
+                    datasets: [{
+                        data: Object.values(statusData),
+                        backgroundColor: Object.keys(statusData).map(key => statusColors[key] || 'rgb(79, 70, 229)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Performance Chart
+        function initPerformanceChart() {
+            const ctx = document.getElementById('performance-chart').getContext('2d');
+
+            // Extract data from the table
+            const counsellors = [];
+            const assignedData = [];
+            const admissionData = [];
+
+            document.querySelectorAll('#performance-table tbody tr').forEach(row => {
+                const nameCell = row.querySelector('td:nth-child(1)');
+                const assignedCell = row.querySelector('td:nth-child(2) span');
+                const admissionCell = row.querySelector('td:nth-child(8) span');
+
+                if (nameCell && assignedCell && admissionCell) {
+                    const name = nameCell.querySelector('.font-medium')?.textContent.trim();
+                    const assigned = parseInt(assignedCell.textContent.trim(), 10) || 0;
+                    const admissions = parseInt(admissionCell.textContent.trim(), 10) || 0;
+
+                    if (name) {
+                        counsellors.push(name);
+                        assignedData.push(assigned);
+                        admissionData.push(admissions);
+                    }
+                }
+            });
+
+            // Create chart
+            window.performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: counsellors,
+                    datasets: [
+                        {
+                            label: 'Assigned',
+                            data: assignedData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgb(59, 130, 246)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Admissions',
+                            data: admissionData,
+                            backgroundColor: 'rgba(236, 72, 153, 0.7)',
+                            borderColor: 'rgb(236, 72, 153)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
 {% endblock %}
