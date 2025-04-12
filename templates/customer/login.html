@@ -5,11 +5,10 @@
 {% block auth_content %}
 <div class="card-enhanced bg-white p-8 rounded-lg shadow-lg animate-fadeIn">
     <div class="text-center mb-6">
-        <img src="/static/images/favicon.svg" alt="Logo" class="w-16 h-16 mx-auto mb-4">
-        <h2 class="text-3xl font-extrabold text-gray-900 bg-gradient-to-r from-indigo-600 to-indigo-400 text-transparent bg-clip-text">
-            Welcome Back
+        <h2 class="text-4xl font-extrabold bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text mb-2">
+            {{ COMPANY_NAME }}
         </h2>
-        <p class="mt-2 text-sm text-gray-600">Sign in to your {{ COMPANY_NAME }} account</p>
+        <p class="mt-2 text-sm text-gray-600">Sign in to your account</p>
     </div>
 
     <form class="mt-8 space-y-6" method="POST" id="login-form">
