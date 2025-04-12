@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load customer_tags %}
 
-{% block title %}Delete Mapping - Customer Management{% endblock %}
+{% block title %}Delete Mapping - {{ COMPANY_NAME }}{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
@@ -31,7 +31,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="bg-gray-50 p-4 rounded-md mb-6">
             <h3 class="text-lg font-medium text-gray-900">Mapping Details</h3>
             <div class="mt-2 border-t border-gray-200">
@@ -59,7 +59,7 @@
                 </dl>
             </div>
         </div>
-        
+
         <form method="POST" action="{% url 'mapping_delete' mapping.id %}">
             {% csrf_token %}
             <div class="flex justify-end">

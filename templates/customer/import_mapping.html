@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load customer_tags %}
 
-{% block title %}Map Columns - Customer Management{% endblock %}
+{% block title %}Map Columns - {{ COMPANY_NAME }}{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
@@ -51,12 +51,12 @@
             {% csrf_token %}
             <input type="hidden" name="import_step" value="1">
             <input type="hidden" name="mapping_data" id="mapping-data">
-            
+
             <div class="space-y-6">
                 <div>
                     <h3 class="text-lg font-medium text-gray-900">Column Mapping</h3>
                     <p class="mt-1 text-sm text-gray-500">Define how columns in your file map to customer fields</p>
-                    
+
                     {% if mappings %}
                     <div class="mt-4 bg-gray-50 p-4 rounded-md">
                         <h4 class="text-base font-medium text-gray-900">Use Existing Mapping</h4>
@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     {% endif %}
-                    
+
                     <div class="mt-6">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-300">
@@ -116,7 +116,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="border-t border-gray-200 pt-5">
                     <div class="relative flex items-start">
                         <div class="flex items-center h-5">
@@ -126,7 +126,7 @@
                             <label for="save_mapping" class="font-medium text-gray-700">Save this mapping for future imports</label>
                         </div>
                     </div>
-                    
+
                     <div id="save-mapping-options" class="mt-4 pl-7 hidden">
                         <div class="space-y-4">
                             <div>
@@ -135,7 +135,7 @@
                                     <input type="text" name="mapping_name" id="mapping_name" class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md">
                                 </div>
                             </div>
-                            
+
                             <div class="relative flex items-start">
                                 <div class="flex items-center h-5">
                                     <input id="set_default" name="set_default" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
@@ -148,7 +148,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="pt-5 border-t border-gray-200">
                     <div class="flex justify-end">
                         <a href="{% url 'import_file' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</a>
@@ -186,7 +186,7 @@
         const saveMapping = document.getElementById('save_mapping');
         const saveMappingOptions = document.getElementById('save-mapping-options');
         const existingMappingSelect = document.getElementById('existing-mapping');
-        
+
         // Show/hide save mapping options
         saveMapping.addEventListener('change', function() {
             if (this.checked) {
@@ -195,17 +195,17 @@
                 saveMappingOptions.classList.add('hidden');
             }
         });
-        
+
         // Handle field type change
         function addFieldTypeChangeListener(select) {
             select.addEventListener('change', function() {
                 const fieldNameSelect = this.closest('tr').querySelector('.field-name-select');
                 const requiredCheckbox = this.closest('tr').querySelector('[name="is_required"]');
                 const defaultValueInput = this.closest('tr').querySelector('[name="default_value"]');
-                
+
                 // Clear existing options
                 fieldNameSelect.innerHTML = '';
-                
+
                 // Add new options based on field type
                 if (this.value === 'base') {
                     fieldNameSelect.innerHTML = document.getElementById('base-fields-template').innerHTML;
@@ -227,74 +227,74 @@
                 }
             });
         }
-        
+
         // Add event listeners to existing rows
         document.querySelectorAll('.field-type-select').forEach(addFieldTypeChangeListener);
-        
+
         // Handle existing mapping selection
         if (existingMappingSelect) {
             existingMappingSelect.addEventListener('change', function() {
                 if (!this.value) return;
-                
+
                 // Apply the selected mapping
                 {% if mapping_fields %}
                 const mappingFields = {{ mapping_fields|safe }};
                 const rows = document.querySelectorAll('.mapping-row');
-                
+
                 rows.forEach(row => {
                     const csvColumn = row.querySelector('[name="csv_column"]').value;
                     const fieldTypeSelect = row.querySelector('[name="field_type"]');
                     const fieldNameSelect = row.querySelector('[name="field_name"]');
                     const requiredCheckbox = row.querySelector('[name="is_required"]');
                     const defaultValueInput = row.querySelector('[name="default_value"]');
-                    
+
                     // Find matching field in the mapping
                     const matchingField = mappingFields.find(field => field.csv_column === csvColumn);
-                    
+
                     if (matchingField) {
                         // Set field type
                         fieldTypeSelect.value = matchingField.field_type;
-                        
+
                         // Trigger change event to update field name options
                         const event = new Event('change');
                         fieldTypeSelect.dispatchEvent(event);
-                        
+
                         // Set field name
                         fieldNameSelect.value = matchingField.field_name;
-                        
+
                         // Set required
                         requiredCheckbox.checked = matchingField.is_required;
-                        
+
                         // Set default value
                         defaultValueInput.value = matchingField.default_value || '';
                     }
                 });
                 {% endif %}
             });
-            
+
             // Trigger change event if a mapping is selected
             if (existingMappingSelect.value) {
                 const event = new Event('change');
                 existingMappingSelect.dispatchEvent(event);
             }
         }
-        
+
         // Handle form submission
         mappingForm.addEventListener('submit', function(e) {
             // Collect mapping data
             const mappingData = {};
-            
+
             document.querySelectorAll('.mapping-row').forEach(row => {
                 const csvColumn = row.querySelector('[name="csv_column"]').value;
                 const fieldType = row.querySelector('[name="field_type"]').value;
-                
+
                 // Skip ignored columns
                 if (fieldType === 'ignore') return;
-                
+
                 const fieldName = row.querySelector('[name="field_name"]').value;
                 const required = row.querySelector('[name="is_required"]').checked;
                 const defaultValue = row.querySelector('[name="default_value"]').value;
-                
+
                 mappingData[csvColumn] = {
                     field_type: fieldType,
                     field_name: fieldName,
@@ -302,10 +302,10 @@
                     default_value: defaultValue
                 };
             });
-            
+
             // Set the mapping data input value
             mappingDataInput.value = JSON.stringify(mappingData);
-            
+
             // Validate save mapping options
             if (saveMapping.checked && !document.getElementById('mapping_name').value) {
                 e.preventDefault();

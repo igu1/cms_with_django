@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Register - Customer Management{% endblock %}
+{% block title %}Register - {{ COMPANY_NAME }}{% endblock %}
 
 {% block auth_content %}
 <div>
@@ -42,7 +42,7 @@
             Register
         </button>
     </div>
-    
+
     <div class="text-sm text-center">
         <p>Already have an account? <a href="{% url 'login' %}" class="font-medium text-indigo-600 hover:text-indigo-500">Sign in</a></p>
     </div>

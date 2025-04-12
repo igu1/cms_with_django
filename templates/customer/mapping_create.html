@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load customer_tags %}
 
-{% block title %}Create Mapping - Customer Management{% endblock %}
+{% block title %}Create Mapping - {{ COMPANY_NAME }}{% endblock %}
 
 {% block content %}
 <div class="mb-6 flex items-center justify-between">
@@ -20,7 +20,7 @@
     <div class="px-4 py-5 sm:p-6">
         <form method="POST" action="{% url 'mapping_create' %}">
             {% csrf_token %}
-            
+
             <div class="space-y-6">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700">Mapping Name</label>
@@ -29,7 +29,7 @@
                     </div>
                     <p class="mt-2 text-sm text-gray-500">A descriptive name for this mapping configuration</p>
                 </div>
-                
+
                 <div>
                     <label for="description" class="block text-sm font-medium text-gray-700">Description (Optional)</label>
                     <div class="mt-1">
@@ -37,7 +37,7 @@
                     </div>
                     <p class="mt-2 text-sm text-gray-500">Additional details about this mapping</p>
                 </div>
-                
+
                 <div class="relative flex items-start">
                     <div class="flex items-center h-5">
                         <input id="is_default" name="is_default" type="checkbox" class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded">
@@ -47,7 +47,7 @@
                         <p class="text-gray-500">This mapping will be automatically selected when importing files</p>
                     </div>
                 </div>
-                
+
                 <div class="pt-5">
                     <div class="flex justify-end">
                         <a href="{% url 'mapping_list' %}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Cancel</a>
