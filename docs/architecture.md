@@ -51,7 +51,7 @@ The Customer Management System is a Django-based web application designed to man
 
 - **Backend**: Django 4.2
 - **Frontend**: Django Templates with Tailwind CSS
-- **Database**: PostgreSQL (production), SQLite (development)
+- **Database**: PostgreSQL (when DEBUG=False), SQLite (when DEBUG=True)
 - **Deployment**: Docker, Vercel
 - **Static Files**: WhiteNoise
 - **Authentication**: Django's built-in authentication system

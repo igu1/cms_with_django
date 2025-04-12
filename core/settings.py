@@ -1,8 +1,14 @@
 
 from pathlib import Path
 import os
-import dj_database_url
 from dotenv import load_dotenv
+
+# Try to import dj_database_url, but don't fail if it's not installed
+try:
+    import dj_database_url
+    DJ_DATABASE_URL_AVAILABLE = True
+except ImportError:
+    DJ_DATABASE_URL_AVAILABLE = False
 
 # Load environment variables from .env file
 load_dotenv()
@@ -78,20 +84,37 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database configuration with dj-database-url
 # https://github.com/jazzband/dj-database-url
 
-# Default to SQLite for local development if DATABASE_URL is not set
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use SQLite for development (DEBUG=True) and PostgreSQL for production (DEBUG=False)
+if DEBUG:
+    # Use SQLite for development
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
-
-# Update database configuration from DATABASE_URL environment variable if available
-if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+else:
+    # Use PostgreSQL for production
+    # First check for DATABASE_URL environment variable if dj_database_url is available
+    if DJ_DATABASE_URL_AVAILABLE and os.getenv('DATABASE_URL'):
+        DATABASES = {
+            'default': dj_database_url.config(
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    else:
+        # Fallback to default PostgreSQL configuration
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'customer_management'),
+                'USER': os.getenv('DB_USER', 'postgres'),
+                'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
+                'HOST': os.getenv('DB_HOST', 'db'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+            }
+        }
 
 
 # Password validation

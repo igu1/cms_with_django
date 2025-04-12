@@ -100,14 +100,29 @@ For a complete list of environment variables, see the [Deployment Guide](deploym
 
 ### Database Configuration
 
-By default, the application uses SQLite for local development. To use PostgreSQL:
+The application automatically selects the database based on the `DEBUG` setting:
 
-1. Uncomment the `DATABASE_URL` line in your `.env` file:
-   ```
-   DATABASE_URL=postgres://username:password@host:port/database_name
-   ```
+- When `DEBUG=True` (development): SQLite is used
+- When `DEBUG=False` (production): PostgreSQL is used
 
-2. If using Docker, PostgreSQL is already configured in the docker-compose.yml file.
+For local development with PostgreSQL:
+
+1. Set `DEBUG=False` in your `.env` file
+2. Configure PostgreSQL connection:
+   - Option 1: Uncomment and configure the `DATABASE_URL` line in your `.env` file:
+     ```
+     DATABASE_URL=postgres://username:password@host:port/database_name
+     ```
+   - Option 2: Configure individual database settings:
+     ```
+     DB_NAME=customer_management
+     DB_USER=postgres
+     DB_PASSWORD=postgres
+     DB_HOST=localhost
+     DB_PORT=5432
+     ```
+
+3. If using Docker, PostgreSQL is already configured in the docker-compose.yml file with `DEBUG=False`.
 
 ## Next Steps
 
