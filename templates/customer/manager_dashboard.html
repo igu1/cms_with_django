@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard - Customer Management{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900">Manager Dashboard</h1>
+    <p class="mt-1 text-sm text-gray-500">Overview of customer data and sales performance</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    <!-- Total Customers -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-indigo-500 rounded-md p-3">
+                    <i class="fas fa-users text-white"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">{{ total_customers }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Assigned Customers -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                    <i class="fas fa-user-check text-white"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Assigned Customers</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">{{ assigned_customers }}</div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Unassigned Customers -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                    <i class="fas fa-user-plus text-white"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Unassigned Customers</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-2xl font-semibold text-gray-900">{{ unassigned_customers }}</div>
+                            {% if unassigned_customers > 0 %}
+                            <div class="ml-2">
+                                <a href="{% url 'unassigned_customers' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Assign</a>
+                            </div>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Import Data -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                    <i class="fas fa-file-import text-white"></i>
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                    <dl>
+                        <dt class="text-sm font-medium text-gray-500 truncate">Import Data</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-lg font-medium text-gray-900">Upload new customer data</div>
+                            <div class="ml-2">
+                                <a href="{% url 'import_file' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">Import</a>
+                            </div>
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    <!-- Status Distribution -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
+            <div class="mt-4">
+                {% for status, count in status_data.items %}
+                <div class="mb-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-700">
+                            {% if status %}{{ status }}{% else %}No Status{% endif %}
+                        </span>
+                        <span class="text-sm text-gray-500">{{ count }}</span>
+                    </div>
+                    <div class="mt-1 relative">
+                        <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                            <div style="width: {% if total_customers > 0 %}{{ count|floatformat:0|default:0|div:total_customers|mul:100 }}{% else %}0{% endif %}%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500"></div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-sm text-gray-500">No customer status data available</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Imports -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="px-4 py-5 sm:p-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Imports</h3>
+            <div class="mt-4 flow-root">
+                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <table class="min-w-full divide-y divide-gray-300">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">File Name</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+                                    <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Records</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                {% for import in recent_imports %}
+                                <tr>
+                                    <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ import.file_name }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.imported_at|date:"M d, Y" }}</td>
+                                    <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ import.successful_records }}/{{ import.total_records }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="py-4 text-sm text-gray-500 text-center">No recent imports</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% if recent_imports %}
+                        <div class="mt-4 text-right">
+                            <a href="{% url 'import_history' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View all imports</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sales Performance -->
+<div class="mt-5 bg-white overflow-hidden shadow rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <h3 class="text-lg leading-6 font-medium text-gray-900">Sales Team Performance</h3>
+        <div class="mt-4 flow-root">
+            <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Sales Person</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Assigned</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Called</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Not Answered</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Invalid Number</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Plan Presented</th>
+                                <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Shortlisted</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            {% for performance in sales_performance %}
+                            <tr>
+                                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">{{ performance.user.get_full_name|default:performance.user.username }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.assigned_count }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.CALLED|default:0 }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.NOT_ANSWERED|default:0 }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.INVALID_NUMBER|default:0 }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.PLAN_PRESENTED|default:0 }}</td>
+                                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ performance.status_counts.SHORTLISTED|default:0 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="py-4 text-sm text-gray-500 text-center">No sales team members</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
