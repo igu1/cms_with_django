@@ -1,12 +1,7 @@
-# Production requirements (mirror from requirements.txt)
-Django==4.2.*
-pandas
-openpyxl
-Faker
+# Core dependencies (mirror from requirements.txt)
+-r requirements.txt
 
 # Development tools
-pytest
-pytest-django
 django-debug-toolbar
 ipython
 python-dotenv
@@ -15,10 +10,21 @@ python-dotenv
 black
 flake8
 isort
+mypy
+
+# Testing
+pytest
+pytest-django
+pytest-cov
+coverage
 
 # Documentation
 sphinx
 sphinx-rtd-theme
 
-# Testing coverage
-coverage
+# Debugging
+django-extensions
+werkzeug
+
+# Performance testing
+locust

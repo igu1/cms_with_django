@@ -225,6 +225,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'whitenoise.runserver_nostatic',
 
+    # Third-party apps
+    'corsheaders',
+
     # Custom apps
     'customer',
 ]
@@ -232,6 +235,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS middleware
+    'core.middleware.DebugStaticFilesMiddleware',  # Debug static files
+    'core.middleware.SecurityHeadersMiddleware',  # Custom security headers
+    'core.middleware.MaintenanceModeMiddleware',  # Maintenance mode
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -268,6 +275,10 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database configuration with dj-database-url
 # https://github.com/jazzband/dj-database-url
 
+# Connection pooling settings
+CONN_MAX_AGE = int(os.getenv('CONN_MAX_AGE', 60))
+CONN_HEALTH_CHECKS = True
+
 # Use SQLite for development (DEBUG=True) and PostgreSQL for production (DEBUG=False)
 if DEBUG:
     # Use SQLite for development
@@ -283,8 +294,8 @@ else:
     if DJ_DATABASE_URL_AVAILABLE and os.getenv('DATABASE_URL'):
         DATABASES = {
             'default': dj_database_url.config(
-                conn_max_age=600,
-                conn_health_checks=True,
+                conn_max_age=CONN_MAX_AGE,
+                conn_health_checks=CONN_HEALTH_CHECKS,
             )
         }
     else:
@@ -297,6 +308,11 @@ else:
                 'PASSWORD': os.getenv('DB_PASSWORD', 'postgres'),
                 'HOST': os.getenv('DB_HOST', 'db'),
                 'PORT': os.getenv('DB_PORT', '5432'),
+                'CONN_MAX_AGE': CONN_MAX_AGE,
+                'OPTIONS': {
+                    'connect_timeout': 10,
+                    'sslmode': 'prefer',
+                },
             }
         }
 
@@ -305,7 +321,21 @@ else:
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 10,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 
@@ -324,12 +354,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = os.getenv('STATIC_URL', 'static/')
+STATIC_URL = os.getenv('STATIC_URL', '/static/')
 STATIC_ROOT = os.getenv('STATIC_ROOT', BASE_DIR / 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # WhiteNoise configuration for static files
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+# WhiteNoise additional settings
+WHITENOISE_ROOT = STATIC_ROOT
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True  # Set to False in production
 
 # Media files
 MEDIA_URL = os.getenv('MEDIA_URL', '/media/')
@@ -347,6 +382,48 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', '')
 # Security settings
 CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'False') == 'True'
 SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'False') == 'True'
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# CORS settings
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost:8010',
+    'http://127.0.0.1:8010',
+    # Add your production domains here
+    # 'https://yourdomain.com',
+]
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'PUT',
+    'PATCH',
+    'DELETE',
+    'OPTIONS',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_EXPOSE_HEADERS = [
+    'content-disposition',
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 
 # Debug toolbar
 if DEBUG:
@@ -363,6 +440,76 @@ LOGOUT_REDIRECT_URL = 'login'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',  # Changed from INFO to DEBUG
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'DEBUG',  # Changed from ERROR to DEBUG
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
+            'formatter': 'verbose',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['mail_admins', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'customer': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',  # Changed from INFO to DEBUG
+            'propagate': True,
+        },
+        'core': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'whitenoise': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 # Custom User Model
 AUTH_USER_MODEL = 'customer.User'

@@ -4,18 +4,79 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{{ COMPANY_NAME }}{% endblock %}</title>
+    {% load static %}
     <!-- Favicon -->
-    <link rel="icon" href="/static/icon-logo.png" type="image/png">
+    <link rel="icon" href="{% static 'icon-logo.png' %}" type="image/png">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome for icons (local) -->
+    <link rel="stylesheet" href="{% static 'fontawesome/css/all.min.css' %}">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/css/custom.css">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <style>
+        /* Inline CSS as a fallback */
+        :root {
+          --primary-color: #1d3362;
+          --primary-hover: #152548;
+        }
+
+        /* Sidebar Gradient */
+        .sidebar-gradient {
+          background: linear-gradient(180deg, #1d3362 0%, #152548 100%);
+        }
+
+        /* Fallback icons (in case Font Awesome fails to load) */
+        .icon-fallback-dashboard {
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='white' d='M0 96C0 60.7 28.7 32 64 32H448c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zm64 64V416H224V160H64zm384 0H288V416H448V160z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+        }
+
+        .icon-fallback-users {
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'%3E%3Cpath fill='white' d='M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192h42.7c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0H21.3C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7h42.7C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3H405.3zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352h117.4c73.6 0 133.3 59.7 133.3 133.3c0 14.7-11.9 26.7-26.7 26.7H154.7c-14.7 0-26.7-11.9-26.7-26.7z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+        }
+
+        .icon-fallback-history {
+          display: inline-block;
+          width: 1em;
+          height: 1em;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath fill='white' d='M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: contain;
+        }
+
+        /* Button Enhancements */
+        .btn-enhanced {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 1rem;
+          font-weight: 500;
+          border-radius: 0.375rem;
+          transition: all 0.3s ease;
+          cursor: pointer;
+        }
+
+        .btn-enhanced:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -26,17 +87,17 @@
             <div class="flex flex-col w-64 sidebar-gradient shadow-lg">
                 <div class="flex items-center justify-center h-16 bg-white">
                     <div class="flex items-center">
-                        <img src="/static/text-logo.png" style="max-width: 100%;" alt="{{ COMPANY_NAME }}" class="h-[100px] ">
+                        <img src="{% static 'text-logo.png' %}" style="max-width: 100%;" alt="{{ COMPANY_NAME }}" class="h-[100px] ">
                     </div>
                 </div>
                 <div class="flex flex-col flex-grow overflow-y-auto">
                     <nav class="flex-1 px-2 py-4 space-y-2">
                         <a href="{% url 'dashboard' %}" class="{% if request.path == '/' %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
-                            <i class="fas fa-tachometer-alt mr-3 text-white"></i>
+                            <i class="fas fa-tachometer-alt mr-3 text-white"></i><span class="icon-fallback-dashboard mr-3 hidden"></span>
                             <span>Dashboard</span>
                         </a>
                         <a href="{% url 'customer_list' %}" class="{% if 'customers' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
-                            <i class="fas fa-users mr-3 text-white"></i>
+                            <i class="fas fa-users mr-3 text-white"></i><span class="icon-fallback-users mr-3 hidden"></span>
                             <span>Customers</span>
                         </a>
                         {% if user.is_manager %}
@@ -49,7 +110,7 @@
                             <span>Import Data</span>
                         </a>
                         <a href="{% url 'import_history' %}" class="{% if 'history' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
-                            <i class="fas fa-history mr-3 text-white"></i>
+                            <i class="fas fa-history mr-3 text-white"></i><span class="icon-fallback-history mr-3 hidden"></span>
                             <span>Import History</span>
                         </a>
                         {% endif %}
@@ -77,7 +138,7 @@
                                     <i class="fas fa-bars"></i>
                                 </button>
                                 <div class="md:hidden ml-2 flex items-center">
-                                    <img src="/static/text-logo.png" alt="{{ COMPANY_NAME }}" class="h-[100px]">
+                                    <img src="{% static 'text-logo.png' %}" alt="{{ COMPANY_NAME }}" class="h-[100px]">
                                 </div>
                             </div>
                         </div>
@@ -98,7 +159,7 @@
             <div class="md:hidden fixed inset-y-0 left-0 z-50 w-full sidebar-gradient transform -translate-x-full transition duration-300 ease-in-out shadow-xl" id="mobile-sidebar">
                 <div class="flex items-center justify-between h-16 bg-white px-4">
                     <div class="flex items-center">
-                        <img src="/static/text-logo.png" alt="{{ COMPANY_NAME }}" class="h-[100px]">
+                        <img src="{% static 'text-logo.png' %}" alt="{{ COMPANY_NAME }}" class="h-[100px]">
                     </div>
                     <button class="text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded-full transition-all duration-200" id="close-sidebar-button">
                         <i class="fas fa-times"></i>
@@ -221,6 +282,29 @@
 
     {% block extra_js %}{% endblock %}
     <!-- Custom JavaScript -->
-    <script src="/static/js/custom.js"></script>
+    <script src="{% static 'js/custom.js' %}"></script>
+    <script>
+        // Check if Font Awesome is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                // Check if Font Awesome is loaded by testing if an icon has the expected width
+                var testIcon = document.querySelector('.fas');
+                if (!testIcon || window.getComputedStyle(testIcon).width === '0px') {
+                    console.log('Font Awesome not loaded, showing fallback icons');
+                    // Hide Font Awesome icons
+                    var faIcons = document.querySelectorAll('.fas');
+                    faIcons.forEach(function(icon) {
+                        icon.style.display = 'none';
+                    });
+
+                    // Show fallback icons
+                    var fallbackIcons = document.querySelectorAll('[class*="icon-fallback"]');
+                    fallbackIcons.forEach(function(icon) {
+                        icon.classList.remove('hidden');
+                    });
+                }
+            }, 500); // Wait for Font Awesome to load
+        });
+    </script>
 </body>
 </html>

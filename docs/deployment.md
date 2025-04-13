@@ -1,37 +1,40 @@
 # Deployment Guide
 
-This guide provides instructions for deploying the Customer Management System to various environments.
+This guide provides instructions for deploying the Customer Management System to production environments.
 
 ## Deployment Options
 
 The application can be deployed in several ways:
 
-1. **Docker Deployment**: Using Docker and Docker Compose
+1. **Docker Deployment**: Using Docker, Docker Compose, and Nginx (recommended for production)
 2. **Vercel Deployment**: Using Vercel for serverless deployment
-3. **Traditional Deployment**: Using a traditional web server like Nginx or Apache
+3. **Traditional Deployment**: Using a traditional web server like Nginx with Gunicorn
 
 ## Prerequisites
 
-Before deploying, ensure you have:
+Before deploying to production, ensure you have:
 
 - A PostgreSQL database
-- Environment variables configured
-- Static files collected
-- Migrations applied
+- Environment variables properly configured for production
+- SSL certificates for secure HTTPS connections
+- A domain name pointing to your server
+- Regular backup strategy in place
 
-## Docker Deployment
+## Docker Deployment (Recommended for Production)
 
 ### Prerequisites
 
-- Docker and Docker Compose installed
+- Docker and Docker Compose installed on your server
 - Git repository cloned
+- Domain name with DNS configured
+- SSL certificates (Let's Encrypt recommended)
 
 ### Steps
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd customer-management
+   git clone https://github.com/igu1/alims.co.in.git
+   cd alims.co.in
    ```
 
 2. Create a `.env` file based on `.env.example`:
@@ -39,50 +42,77 @@ Before deploying, ensure you have:
    cp .env.example .env
    ```
 
-3. Update the environment variables in `.env`:
-   ```
-   DEBUG=False
-   SECRET_KEY=your_secure_secret_key
-   ALLOWED_HOSTS=your-domain.com,www.your-domain.com
-   COMPANY_NAME=alims.co.in
-   # The DATABASE_URL will be set by docker-compose.yml
-   # Configure other database settings if needed
-   DB_NAME=customer_management
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_HOST=db
-   DB_PORT=5432
+3. Generate a secure secret key:
+   ```bash
+   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
    ```
 
-4. Build and start the containers:
+4. Update the environment variables in `.env` for production:
+   ```
+   DEBUG=False
+   SECRET_KEY=your_generated_secure_key
+   ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+   COMPANY_NAME=alims.co.in
+   DATABASE_URL=postgres://postgres:postgres@db:5432/customer_management
+
+   # Email settings (important for production)
+   EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+   EMAIL_HOST=your-smtp-server.com
+   EMAIL_PORT=587
+   EMAIL_USE_TLS=True
+   EMAIL_HOST_USER=your-email@example.com
+   EMAIL_HOST_PASSWORD=your-secure-password
+   DEFAULT_FROM_EMAIL=your-email@example.com
+
+   # Security settings
+   CSRF_COOKIE_SECURE=True
+   SESSION_COOKIE_SECURE=True
+   ```
+
+5. Set up SSL certificates for your domain:
+   ```bash
+   mkdir -p nginx/ssl
+
+   # For production, use Let's Encrypt:
+   # certbot certonly --webroot -w /path/to/webroot -d your-domain.com -d www.your-domain.com
+   # cp /etc/letsencrypt/live/your-domain.com/fullchain.pem nginx/ssl/cert.pem
+   # cp /etc/letsencrypt/live/your-domain.com/privkey.pem nginx/ssl/key.pem
+
+   # For development/testing, generate self-signed certificates:
+   openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout nginx/ssl/key.pem -out nginx/ssl/cert.pem
+   ```
+
+6. Create logs directory for application logs:
+   ```bash
+   mkdir -p logs
+   ```
+
+7. Build and start the containers:
    ```bash
    docker-compose up -d
    ```
 
-5. Run migrations:
+8. Run migrations:
    ```bash
    docker-compose exec web python manage.py migrate
    ```
 
-6. Create a superuser:
+9. Create a superuser:
    ```bash
    docker-compose exec web python manage.py createsuperuser
    ```
 
-7. Collect static files:
-   ```bash
-   docker-compose exec web python manage.py collectstatic --noinput
-   ```
-
-8. Access the application at your domain or server IP.
+10. Your application should now be running securely at https://your-domain.com
 
 ### Docker Compose Configuration
 
-The `docker-compose.yml` file includes:
+The updated `docker-compose.yml` file includes:
 
-- Web service running the Django application
-- PostgreSQL database service
-- Volume for persistent database storage
+- Web service running the Django application with optimized Gunicorn settings
+- PostgreSQL database service with health checks
+- Nginx service for SSL termination and static file serving
+- Volumes for persistent database, static files, and media storage
+- Health checks for all services
 
 ### Updating the Deployment
 
@@ -99,58 +129,129 @@ To update the deployment:
    docker-compose up -d --build
    ```
 
-3. Run migrations:
+3. Run migrations if needed:
    ```bash
    docker-compose exec web python manage.py migrate
    ```
 
-4. Collect static files:
+### Monitoring and Maintenance
+
+1. Check application logs:
    ```bash
-   docker-compose exec web python manage.py collectstatic --noinput
+   docker-compose logs -f web
+   ```
+
+2. Check the health endpoint:
+   ```bash
+   curl https://your-domain.com/health/
+   ```
+
+3. Set up automated database backups:
+   ```bash
+   # Create a backup script
+   mkdir -p scripts
+
+   cat > scripts/backup.sh << 'EOF'
+   #!/bin/bash
+   BACKUP_DIR="/path/to/backups"
+   DATETIME=$(date +%Y-%m-%d_%H-%M-%S)
+   FILENAME="${BACKUP_DIR}/backup_${DATETIME}.sql"
+
+   mkdir -p "${BACKUP_DIR}"
+   docker-compose exec -T db pg_dump -U postgres customer_management > "${FILENAME}"
+   gzip "${FILENAME}"
+
+   # Delete backups older than 30 days
+   find "${BACKUP_DIR}" -name "backup_*.sql.gz" -type f -mtime +30 -delete
+   EOF
+
+   chmod +x scripts/backup.sh
+
+   # Add to crontab to run daily
+   (crontab -l 2>/dev/null; echo "0 2 * * * /path/to/alims.co.in/scripts/backup.sh") | crontab -
    ```
 
 ## Vercel Deployment
 
 ### Prerequisites
 
-- Vercel CLI installed
-- Git repository cloned
+- Vercel account and Vercel CLI installed
+- Git repository cloned or forked
 - PostgreSQL database (can use services like Supabase, Neon, or AWS RDS)
+- Proper `vercel.json` configuration file (included in the repository)
 
 ### Steps
 
-1. Install Vercel CLI:
+1. Fork the repository on GitHub or clone it locally:
+   ```bash
+   git clone https://github.com/igu1/alims.co.in.git
+   cd alims.co.in
+   ```
+
+2. Install Vercel CLI if you haven't already:
    ```bash
    npm install -g vercel
    ```
 
-2. Login to Vercel:
+3. Login to Vercel:
    ```bash
    vercel login
    ```
 
-3. Configure environment variables in Vercel:
+4. Generate a secure Django secret key:
+   ```bash
+   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+   ```
+
+5. Configure environment variables in Vercel:
    - Go to your Vercel dashboard
    - Select your project
    - Go to Settings > Environment Variables
    - Add the following variables:
-     - `SECRET_KEY`: Your Django secret key
+     - `SECRET_KEY`: Your generated Django secret key
      - `DEBUG`: Set to "False"
-     - `ALLOWED_HOSTS`: Your Vercel domain
+     - `ALLOWED_HOSTS`: Your Vercel domain (e.g., `your-app.vercel.app,vercel.app`)
      - `DATABASE_URL`: Your PostgreSQL connection string
      - `COMPANY_NAME`: alims.co.in
+     - `CSRF_COOKIE_SECURE`: "True"
+     - `SESSION_COOKIE_SECURE`: "True"
+     - Email configuration variables if needed
 
-4. Deploy the application:
+6. Deploy the application:
    ```bash
    vercel
    ```
 
-5. Run migrations (you'll need to set up a way to run migrations on your database):
+7. After deployment, run migrations using the Vercel CLI:
    ```bash
-   python manage.py migrate
+   vercel env pull .env.local
+   vercel run python manage.py migrate
+   vercel run python manage.py createsuperuser
    ```
 
 ### Vercel Configuration
+
+The `vercel.json` file is configured to:
+
+- Use Python 3.9 runtime
+- Set up proper routing for static files
+- Run the build script to collect static files
+- Configure environment variables
+
+### Limitations of Vercel Deployment
+
+1. **Serverless Architecture**: Vercel uses a serverless architecture, which means:
+   - Cold starts may occur if the application is not frequently accessed
+   - Long-running processes are not supported
+   - File system operations are limited
+
+2. **Database Considerations**:
+   - You must use an external PostgreSQL database
+   - Database connections may need to be optimized for serverless environments
+
+3. **Static and Media Files**:
+   - Static files are handled by Vercel's CDN
+   - Media files should be stored in an external service like AWS S3
 
 The `vercel.json` file includes:
 

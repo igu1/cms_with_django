@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /import_history/
+Disallow: /import_file/
+Disallow: /customer/*/edit/
+Disallow: /customer/*/delete/
+Disallow: /customer/*/assign/
+
+# Sitemap
+Sitemap: https://your-domain.com/sitemap.xml

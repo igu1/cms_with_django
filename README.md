@@ -16,8 +16,9 @@ A web-based software application designed to import, read, and manage preformatt
 
 - **Frontend**: Django Templates with Tailwind CSS
 - **Backend**: Django 4.2
-- **Database**: SQLite (default), PostgreSQL (Docker)
-- **Deployment**: Vercel
+- **Database**: SQLite (development), PostgreSQL (production)
+- **Deployment**: Docker with Nginx (recommended), Vercel (serverless)
+- **Security**: HTTPS, HSTS, secure cookies, content security policies
 
 ## Installation and Setup
 
@@ -141,28 +142,67 @@ Key configuration options in `core/settings.py`:
 - `MEDIA_ROOT`: Location for uploaded files
 - `STATIC_ROOT`: Location for collected static files
 
-## Vercel Deployment
+## Production Deployment
 
-1. Install Vercel CLI:
+For detailed production deployment instructions, see [docs/deployment.md](docs/deployment.md).
+
+### Docker Production Deployment (Recommended)
+
+1. Clone the repository:
    ```bash
-   npm install -g vercel
+   git clone https://github.com/igu1/alims.co.in.git
+   cd alims.co.in
    ```
 
-2. Login to Vercel:
+2. Create production environment file:
    ```bash
-   vercel login
+   cp .env.production .env
    ```
 
-3. Deploy the application:
+3. Generate a secure secret key:
    ```bash
-   vercel
+   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
    ```
 
-4. Set up environment variables in the Vercel dashboard:
+4. Update the environment variables in `.env` with your production values.
+
+5. Generate SSL certificates (or use Let's Encrypt):
+   ```bash
+   ./scripts/generate_ssl_cert.sh
+   ```
+
+6. Build and start the containers:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+7. Run migrations and create a superuser:
+   ```bash
+   docker-compose exec web python manage.py migrate
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+8. Set up automated database backups:
+   ```bash
+   ./scripts/backup_db.sh
+   ```
+
+### Vercel Deployment (Serverless)
+
+1. Fork the repository on GitHub.
+
+2. Connect your GitHub repository to Vercel.
+
+3. Configure environment variables in the Vercel dashboard:
    - `SECRET_KEY`: Your Django secret key
+   - `DEBUG`: Set to "False"
    - `DATABASE_URL`: Your PostgreSQL connection string
-   - `ALLOWED_HOSTS`: Add your Vercel domain
+   - `ALLOWED_HOSTS`: Your Vercel domain
    - `COMPANY_NAME`: alims.co.in
+   - `CSRF_COOKIE_SECURE`: "True"
+   - `SESSION_COOKIE_SECURE`: "True"
+
+4. Deploy the application from the Vercel dashboard.
 
 ## API Documentation
 
