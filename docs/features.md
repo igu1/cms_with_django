@@ -23,16 +23,15 @@ This document provides a comprehensive overview of all features available in the
 - **Student Counsellor**: Can view and manage only their assigned customers.
 
 ### User Administration
-- User creation, editing, and deactivation through Django admin panel.
+- User creation, editing, and deactivation through admin panel.
 - User profile management with role-specific permissions.
-- Password reset functionality.
+- Password management through admin panel.
 
 ## Authentication and Authorization
 
 ### Authentication
 - Secure login system with username and password.
 - Session management with timeout for security.
-- Remember me functionality for convenience.
 
 ### Authorization
 - Role-based access control (RBAC) for different user types.

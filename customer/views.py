@@ -31,39 +31,7 @@ def login_view(request):
 
     return render(request, 'customer/login.html')
 
-def register_view(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-        role = request.POST.get('role')
-
-        if not username or not email or not password:
-            messages.error(request, 'Please fill in all required fields')
-            return render(request, 'customer/register.html')
-
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already exists')
-            return render(request, 'customer/register.html')
-
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already exists')
-            return render(request, 'customer/register.html')
-
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            role=role
-        )
-
-        login(request, user)
-        return redirect('dashboard')
-
-    return render(request, 'customer/register.html')
+# Registration view removed
 
 # Dashboard Views
 @login_required
@@ -241,7 +209,7 @@ def import_file(request):
                         customer_data = {
                             'phone_number': row['phone_number']
                         }
-                        
+
                         if 'name' in row and pd.notna(row['name']):
                             customer_data['name'] = row['name']
                         else:
