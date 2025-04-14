@@ -60,6 +60,16 @@ def percentage(value, arg):
         return float(value) / float(arg) * 100
     except (ValueError, ZeroDivisionError):
         return 0
+        
+@register.filter
+def split(value, arg):
+    """
+    Splits a string by the specified delimiter
+    Usage: {{ value|split:"," }}
+    """
+    if value is None:
+        return []
+    return value.split(arg)
 
 @register.filter(is_safe=True)
 def status_badge(status):

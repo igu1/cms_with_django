@@ -105,6 +105,10 @@
                             <i class="fas fa-user-plus mr-3 text-white"></i>
                             <span>Assign Customers</span>
                         </a>
+                        <a href="{% url 'customer_status' %}" class="{% if 'customer-status' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                            <i class="fas fa-chart-pie mr-3 text-white"></i>
+                            <span>Customer Status</span>
+                        </a>
                         <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                             <i class="fas fa-file-import mr-3 text-white"></i>
                             <span>Import Data</span>
@@ -179,6 +183,10 @@
                         <a href="{% url 'unassigned_customers' %}" class="{% if 'unassigned' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                             <i class="fas fa-user-plus mr-3 text-white"></i>
                             <span>Assign Customers</span>
+                        </a>
+                        <a href="{% url 'customer_status' %}" class="{% if 'customer-status' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                            <i class="fas fa-chart-pie mr-3 text-white"></i>
+                            <span>Customer Status</span>
                         </a>
                         <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                             <i class="fas fa-file-import mr-3 text-white"></i>

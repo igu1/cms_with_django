@@ -90,6 +90,31 @@ def manager_dashboard(request):
     return render(request, 'customer/manager_dashboard.html', context)
 
 @login_required
+def customer_status(request):
+    """View for the Customer Status Distribution page"""
+    if not request.user.is_authenticated:
+        return redirect('login')
+        
+    total_customers = Customer.objects.count()
+    
+    # Get counts for each status
+    status_counts = Customer.objects.values('status').annotate(count=Count('status'))
+    status_data = {status['status']: status['count'] for status in status_counts}
+    
+    # Make sure all statuses are represented in the data, even if count is 0
+    for status in CustomerStatus.values:
+        if status not in status_data:
+            status_data[status] = 0
+    
+    context = {
+        'total_customers': total_customers,
+        'status_data': status_data,
+        'page_title': 'Customer Status Distribution'
+    }
+    
+    return render(request, 'customer/customer_status.html', context)
+
+@login_required
 def sales_dashboard(request):
     if not request.user.is_sales():
         return HttpResponseForbidden("You don't have permission to access this page.")

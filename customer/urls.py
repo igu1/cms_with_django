@@ -23,4 +23,5 @@ urlpatterns = [
     path('customers/unassigned/', views.unassigned_customers, name='unassigned_customers'),
     path('customers/bulk-assign/', views.bulk_assign_customers, name='bulk_assign_customers'),
     path('customers/random-assign/', views.random_assign_customers, name='random_assign_customers'),
+    path('customer-status/', views.customer_status, name='customer_status'),
 ]

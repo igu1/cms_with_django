@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load customer_tags %}
+
+{% block title %}Customer Status Distribution - {{ COMPANY_NAME }}{% endblock %}
+
+{% block header %}Customer Status Distribution{% endblock %}
+{% block header_icon %}<i class="fas fa-chart-pie"></i>{% endblock %}
+{% block subheader %}Overview of customer status distribution and conversion funnel{% endblock %}
+
+{% block content %}
+<!-- Status Distribution with Tabs -->
+<div class="card-enhanced bg-white overflow-hidden rounded-lg">
+    <div class="px-4 py-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
+                <p class="mt-1 text-sm text-gray-500">Track the progress of your potential students through the enrollment journey</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="view-status-list" class="text-xs px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200">
+                    <i class="fas fa-list mr-1"></i> List View
+                </button>
+                <button id="view-status-grid" class="text-xs px-3 py-1.5 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
+                    <i class="fas fa-th-large mr-1"></i> Grid View
+                </button>
+            </div>
+        </div>
+        
+        <!-- List View (Default) -->
+        <div id="status-list-view" class="mt-4">
+            <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                <div class="grid grid-cols-12 bg-gray-100 py-2 px-4 border-b border-gray-200 text-sm font-medium text-gray-700">
+                    <div class="col-span-5">Status</div>
+                    <div class="col-span-2 text-center">Count</div>
+                    <div class="col-span-3 text-center">Percentage</div>
+                    <div class="col-span-2 text-right">Action</div>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for status, count in status_data.items %}
+                    <div class="grid grid-cols-12 py-3 px-4 items-center hover:bg-gray-50 transition-colors duration-150">
+                        <div class="col-span-5">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-2
+                                    {% if status == 'INVALID' %}bg-red-500
+                                    {% elif status == 'VALID' %}bg-green-500
+                                    {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
+                                    {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
+                                    {% elif status == 'INTERESTED' %}bg-blue-500
+                                    {% elif status == 'NOT_INTERESTED' %}bg-gray-500
+                                    {% elif status == 'FOLLOW_UP' %}bg-indigo-500
+                                    {% elif status == 'SHORTLISTED' %}bg-green-500
+                                    {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
+                                    {% elif status == 'REGISTRATION' %}bg-teal-500
+                                    {% elif status == 'ADMISSION' %}bg-pink-500
+                                    {% else %}bg-indigo-500{% endif %}">
+                                </div>
+                                <span class="font-medium text-gray-900">
+                                    {% if status == 'INVALID' %}Invalid
+                                    {% elif status == 'VALID' %}Valid
+                                    {% elif status == 'CALL_NOT_ATTENDED' %}Call Not Attended
+                                    {% elif status == 'PLAN_PRESENTED' %}Plan Presented
+                                    {% elif status == 'INTERESTED' %}Interested
+                                    {% elif status == 'NOT_INTERESTED' %}Not Interested
+                                    {% elif status == 'FOLLOW_UP' %}Follow Up
+                                    {% elif status == 'SHORTLISTED' %}Shortlisted
+                                    {% elif status == 'CAMPUS_VISIT' %}Campus Visit
+                                    {% elif status == 'REGISTRATION' %}Registration
+                                    {% elif status == 'ADMISSION' %}Admission
+                                    {% else %}{{ status }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-span-2 text-center">
+                            <span class="font-semibold {% if count > 0 %}text-indigo-600{% else %}text-gray-400{% endif %}">{{ count }}</span>
+                        </div>
+                        <div class="col-span-3 text-center">
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div class="h-2.5 rounded-full {% if status == 'INVALID' %}bg-red-500
+                                    {% elif status == 'VALID' %}bg-green-500
+                                    {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
+                                    {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
+                                    {% elif status == 'INTERESTED' %}bg-blue-500
+                                    {% elif status == 'NOT_INTERESTED' %}bg-gray-500
+                                    {% elif status == 'FOLLOW_UP' %}bg-indigo-500
+                                    {% elif status == 'SHORTLISTED' %}bg-green-500
+                                    {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
+                                    {% elif status == 'REGISTRATION' %}bg-teal-500
+                                    {% elif status == 'ADMISSION' %}bg-pink-500
+                                    {% else %}bg-indigo-500{% endif %}" 
+                                    style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
+                                </div>
+                            </div>
+                            <span class="text-xs text-gray-500 mt-1 inline-block">{{ count|percentage:total_customers|floatformat:1 }}%</span>
+                        </div>
+                        <div class="col-span-2 text-right">
+                            <a href="{% url 'customer_list' %}?status={{ status }}" class="text-xs font-medium text-indigo-600 hover:text-indigo-500">
+                                View <i class="fas fa-chevron-right ml-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="py-8 text-center text-gray-500">
+                        <p>No customer status data available</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Grid View (Hidden by default) -->
+        <div id="status-grid-view" class="mt-4 hidden">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for status, count in status_data.items %}
+                {% if count > 0 %}
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3
+                                {% if status == 'INVALID' %}bg-red-100 text-red-600
+                                {% elif status == 'VALID' %}bg-green-100 text-green-600
+                                {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-100 text-yellow-600
+                                {% elif status == 'PLAN_PRESENTED' %}bg-purple-100 text-purple-600
+                                {% elif status == 'INTERESTED' %}bg-blue-100 text-blue-600
+                                {% elif status == 'NOT_INTERESTED' %}bg-gray-100 text-gray-600
+                                {% elif status == 'FOLLOW_UP' %}bg-indigo-100 text-indigo-600
+                                {% elif status == 'SHORTLISTED' %}bg-green-100 text-green-600
+                                {% elif status == 'CAMPUS_VISIT' %}bg-orange-100 text-orange-600
+                                {% elif status == 'REGISTRATION' %}bg-teal-100 text-teal-600
+                                {% elif status == 'ADMISSION' %}bg-pink-100 text-pink-600
+                                {% else %}bg-indigo-100 text-indigo-600{% endif %}">
+                                <i class="
+                                    {% if status == 'INVALID' %}fas fa-times-circle
+                                    {% elif status == 'VALID' %}fas fa-check-circle
+                                    {% elif status == 'CALL_NOT_ATTENDED' %}fas fa-phone-slash
+                                    {% elif status == 'PLAN_PRESENTED' %}fas fa-file-alt
+                                    {% elif status == 'INTERESTED' %}fas fa-thumbs-up
+                                    {% elif status == 'NOT_INTERESTED' %}fas fa-thumbs-down
+                                    {% elif status == 'FOLLOW_UP' %}fas fa-calendar-check
+                                    {% elif status == 'SHORTLISTED' %}fas fa-star
+                                    {% elif status == 'CAMPUS_VISIT' %}fas fa-building
+                                    {% elif status == 'REGISTRATION' %}fas fa-clipboard-list
+                                    {% elif status == 'ADMISSION' %}fas fa-graduation-cap
+                                    {% else %}fas fa-question{% endif %}"></i>
+                            </div>
+                            <span class="font-medium text-gray-900">
+                                {% if status == 'INVALID' %}Invalid
+                                {% elif status == 'VALID' %}Valid
+                                {% elif status == 'CALL_NOT_ATTENDED' %}Call Not Attended
+                                {% elif status == 'PLAN_PRESENTED' %}Plan Presented
+                                {% elif status == 'INTERESTED' %}Interested
+                                {% elif status == 'NOT_INTERESTED' %}Not Interested
+                                {% elif status == 'FOLLOW_UP' %}Follow Up
+                                {% elif status == 'SHORTLISTED' %}Shortlisted
+                                {% elif status == 'CAMPUS_VISIT' %}Campus Visit
+                                {% elif status == 'REGISTRATION' %}Registration
+                                {% elif status == 'ADMISSION' %}Admission
+                                {% else %}{{ status }}{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-500">Count</span>
+                        <span class="text-lg font-semibold text-indigo-600">{{ count }}</span>
+                    </div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-gray-500">Percentage</span>
+                        <span class="text-sm font-medium">{{ count|percentage:total_customers|floatformat:1 }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mb-4">
+                        <div class="h-1.5 rounded-full {% if status == 'INVALID' %}bg-red-500
+                            {% elif status == 'VALID' %}bg-green-500
+                            {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
+                            {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
+                            {% elif status == 'INTERESTED' %}bg-blue-500
+                            {% elif status == 'NOT_INTERESTED' %}bg-gray-500
+                            {% elif status == 'FOLLOW_UP' %}bg-indigo-500
+                            {% elif status == 'SHORTLISTED' %}bg-green-500
+                            {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
+                            {% elif status == 'REGISTRATION' %}bg-teal-500
+                            {% elif status == 'ADMISSION' %}bg-pink-500
+                            {% else %}bg-indigo-500{% endif %}" 
+                            style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
+                        </div>
+                    </div>
+                    <a href="{% url 'customer_list' %}?status={{ status }}" class="w-full inline-flex items-center justify-center text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 py-2 px-4 rounded-md transition-colors duration-200">
+                        View Customers <i class="fas fa-chevron-right ml-1 text-xs"></i>
+                    </a>
+                </div>
+                {% endif %}
+                {% empty %}
+                <div class="col-span-3 py-8 text-center text-gray-500">
+                    <p>No customer status data available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Conversion Funnel -->
+<div class="card-enhanced bg-white overflow-hidden rounded-lg mt-6">
+    <div class="px-4 py-5 sm:p-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Conversion Funnel</h3>
+                <p class="mt-1 text-sm text-gray-500">Visualize the customer journey from initial contact to admission</p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="relative py-8">
+                <!-- Funnel Steps -->
+                {% with funnel_steps="VALID,CALL_NOT_ATTENDED,PLAN_PRESENTED,INTERESTED,SHORTLISTED,CAMPUS_VISIT,REGISTRATION,ADMISSION"|split:"," %}
+                {% for step in funnel_steps %}
+                    {% with count=status_data|get_item:step|default:0 %}
+                    <div class="relative mb-6">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="flex items-center">
+                                <div class="w-6 h-6 rounded-full flex items-center justify-center mr-2
+                                    {% if step == 'VALID' %}bg-green-100 text-green-600
+                                    {% elif step == 'CALL_NOT_ATTENDED' %}bg-yellow-100 text-yellow-600
+                                    {% elif step == 'PLAN_PRESENTED' %}bg-purple-100 text-purple-600
+                                    {% elif step == 'INTERESTED' %}bg-blue-100 text-blue-600
+                                    {% elif step == 'SHORTLISTED' %}bg-green-100 text-green-600
+                                    {% elif step == 'CAMPUS_VISIT' %}bg-orange-100 text-orange-600
+                                    {% elif step == 'REGISTRATION' %}bg-teal-100 text-teal-600
+                                    {% elif step == 'ADMISSION' %}bg-pink-100 text-pink-600
+                                    {% else %}bg-indigo-100 text-indigo-600{% endif %}">
+                                    <i class="
+                                        {% if step == 'VALID' %}fas fa-check-circle
+                                        {% elif step == 'CALL_NOT_ATTENDED' %}fas fa-phone-slash
+                                        {% elif step == 'PLAN_PRESENTED' %}fas fa-file-alt
+                                        {% elif step == 'INTERESTED' %}fas fa-thumbs-up
+                                        {% elif step == 'SHORTLISTED' %}fas fa-star
+                                        {% elif step == 'CAMPUS_VISIT' %}fas fa-building
+                                        {% elif step == 'REGISTRATION' %}fas fa-clipboard-list
+                                        {% elif step == 'ADMISSION' %}fas fa-graduation-cap
+                                        {% else %}fas fa-question{% endif %} text-sm"></i>
+                                </div>
+                                <span class="font-medium text-gray-900">
+                                    {% if step == 'VALID' %}Valid Leads
+                                    {% elif step == 'CALL_NOT_ATTENDED' %}Initial Contact
+                                    {% elif step == 'PLAN_PRESENTED' %}Plan Presentation
+                                    {% elif step == 'INTERESTED' %}Interest Shown
+                                    {% elif step == 'SHORTLISTED' %}Shortlisted
+                                    {% elif step == 'CAMPUS_VISIT' %}Campus Visit
+                                    {% elif step == 'REGISTRATION' %}Registration
+                                    {% elif step == 'ADMISSION' %}Admission
+                                    {% else %}{{ step }}{% endif %}
+                                </span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-lg font-semibold text-indigo-600">{{ count }}</span>
+                                <span class="ml-2 text-sm text-gray-500">({{ count|percentage:total_customers|floatformat:1 }}%)</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="h-2.5 rounded-full
+                                {% if step == 'VALID' %}bg-green-500
+                                {% elif step == 'CALL_NOT_ATTENDED' %}bg-yellow-500
+                                {% elif step == 'PLAN_PRESENTED' %}bg-purple-500
+                                {% elif step == 'INTERESTED' %}bg-blue-500
+                                {% elif step == 'SHORTLISTED' %}bg-green-500
+                                {% elif step == 'CAMPUS_VISIT' %}bg-orange-500
+                                {% elif step == 'REGISTRATION' %}bg-teal-500
+                                {% elif step == 'ADMISSION' %}bg-pink-500
+                                {% else %}bg-indigo-500{% endif %}" 
+                                style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
+                            </div>
+                        </div>
+                        {% if not forloop.last %}
+                        <div class="absolute left-3 top-8 h-6 w-0.5 bg-gray-300"></div>
+                        {% endif %}
+                    </div>
+                    {% endwith %}
+                {% endfor %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Distribution - Tab implementation
+        const viewStatusListBtn = document.getElementById('view-status-list');
+        const viewStatusGridBtn = document.getElementById('view-status-grid');
+        const statusListView = document.getElementById('status-list-view');
+        const statusGridView = document.getElementById('status-grid-view');
+
+        if (viewStatusListBtn && viewStatusGridBtn) {
+            viewStatusListBtn.addEventListener('click', function() {
+                statusListView.classList.remove('hidden');
+                statusGridView.classList.add('hidden');
+                viewStatusListBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewStatusListBtn.classList.add('bg-indigo-600', 'text-white');
+                viewStatusGridBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewStatusGridBtn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+
+            viewStatusGridBtn.addEventListener('click', function() {
+                statusListView.classList.add('hidden');
+                statusGridView.classList.remove('hidden');
+                viewStatusGridBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewStatusGridBtn.classList.add('bg-indigo-600', 'text-white');
+                viewStatusListBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewStatusListBtn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+        }
+    });
+</script>
+{% endblock %}

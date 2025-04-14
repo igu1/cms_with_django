@@ -107,103 +107,54 @@
 </div>
 
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
-    <!-- Status Distribution -->
+    <!-- Status Distribution Summary -->
     <div class="card-enhanced bg-white overflow-hidden rounded-lg">
         <div class="px-4 py-5 sm:p-6">
             <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Distribution</h3>
-                    <p class="mt-1 text-sm text-gray-500">Track the progress of your potential students through the enrollment journey</p>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Status Summary</h3>
+                    <p class="mt-1 text-sm text-gray-500">Overview of customer status distribution</p>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button id="view-as-chart" class="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-200">
-                        <i class="fas fa-chart-pie mr-1"></i> Chart
-                    </button>
-                    <button id="view-as-bars" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
-                        <i class="fas fa-bars mr-1"></i> Bars
-                    </button>
-                </div>
+                <a href="{% url 'customer_status' %}" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 flex items-center">
+                    View detailed analysis <i class="fas fa-arrow-right ml-1"></i>
+                </a>
             </div>
-            <div id="status-chart" class="hidden h-64 mb-4"></div>
-            <div id="status-bars" class="mt-4">
-                {% for status, count in status_data.items %}
-                <div class="mb-3">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            {% if status %}
-                                {% status_icon status %}
-                                <span class="ml-2 text-sm font-medium text-gray-700">
-                                    {% if status == 'INVALID' %}
-                                        <span class="font-medium">Invalid</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Contact information needs verification</span>
-                                    {% elif status == 'VALID' %}
-                                        <span class="font-medium">Valid</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Contact information verified</span>
-                                    {% elif status == 'CALL_NOT_ATTENDED' %}
-                                        <span class="font-medium">Call Not Attended</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer missed the call</span>
-                                    {% elif status == 'PLAN_PRESENTED' %}
-                                        <span class="font-medium">Plan Presented</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Course details shared with customer</span>
-                                    {% elif status == 'INTERESTED' %}
-                                        <span class="font-medium">Interested</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer showed positive interest</span>
-                                    {% elif status == 'NOT_INTERESTED' %}
-                                        <span class="font-medium">Not Interested</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer declined to proceed</span>
-                                    {% elif status == 'FOLLOW_UP' %}
-                                        <span class="font-medium">Follow Up</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Scheduled for next contact</span>
-                                    {% elif status == 'SHORTLISTED' %}
-                                        <span class="font-medium">Shortlisted</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer shortlisted our institution</span>
-                                    {% elif status == 'CAMPUS_VISIT' %}
-                                        <span class="font-medium">Campus Visit</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer visited or scheduled a visit</span>
-                                    {% elif status == 'REGISTRATION' %}
-                                        <span class="font-medium">Registration</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer registered for a program</span>
-                                    {% elif status == 'ADMISSION' %}
-                                        <span class="font-medium">Admission</span>
-                                        <span class="text-xs text-gray-500 ml-1">- Customer completed admission process</span>
-                                    {% else %}
-                                        {{ status }}
-                                    {% endif %}
-                                </span>
-                            {% else %}
-                                <i class="fas fa-question-circle text-gray-500"></i>
-                                <span class="ml-2 text-sm font-medium text-gray-700">No Status</span>
-                                <span class="text-xs text-gray-500 ml-1">- Initial contact pending</span>
-                            {% endif %}
+            
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {% with key_statuses="VALID,INTERESTED,SHORTLISTED,ADMISSION"|split:"," %}
+                {% for status in key_statuses %}
+                {% with count=status_data|get_item:status|default:0 %}
+                <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2
+                            {% if status == 'VALID' %}bg-green-100 text-green-600
+                            {% elif status == 'INTERESTED' %}bg-blue-100 text-blue-600
+                            {% elif status == 'SHORTLISTED' %}bg-green-100 text-green-600
+                            {% elif status == 'ADMISSION' %}bg-pink-100 text-pink-600
+                            {% else %}bg-indigo-100 text-indigo-600{% endif %}">
+                            <i class="
+                                {% if status == 'VALID' %}fas fa-check-circle
+                                {% elif status == 'INTERESTED' %}fas fa-thumbs-up
+                                {% elif status == 'SHORTLISTED' %}fas fa-star
+                                {% elif status == 'ADMISSION' %}fas fa-graduation-cap
+                                {% else %}fas fa-question{% endif %} text-sm"></i>
                         </div>
-                        <span class="text-sm font-medium {% if count > 0 %}text-indigo-600{% else %}text-gray-500{% endif %}">{{ count }}</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {% if status == 'VALID' %}Valid
+                            {% elif status == 'INTERESTED' %}Interested
+                            {% elif status == 'SHORTLISTED' %}Shortlisted
+                            {% elif status == 'ADMISSION' %}Admission
+                            {% else %}{{ status }}{% endif %}
+                        </span>
                     </div>
-                    <div class="mt-1 relative">
-                        <div class="overflow-hidden h-3 text-xs flex rounded bg-gray-200">
-                            <div style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%"
-                                class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center rounded-l
-                                {% if status == 'INVALID' %}bg-red-500
-                                {% elif status == 'VALID' %}bg-green-500
-                                {% elif status == 'CALL_NOT_ATTENDED' %}bg-yellow-500
-                                {% elif status == 'PLAN_PRESENTED' %}bg-purple-500
-                                {% elif status == 'INTERESTED' %}bg-blue-500
-                                {% elif status == 'NOT_INTERESTED' %}bg-gray-500
-                                {% elif status == 'FOLLOW_UP' %}bg-indigo-500
-                                {% elif status == 'SHORTLISTED' %}bg-green-500
-                                {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
-                                {% elif status == 'REGISTRATION' %}bg-teal-500
-                                {% elif status == 'ADMISSION' %}bg-pink-500
-                                {% else %}bg-indigo-500{% endif %}">
-                                {% if count > 0 and total_customers > 0 and count|percentage:total_customers > 5 %}
-                                    <span class="px-2">{{ count|percentage:total_customers|floatformat:1 }}%</span>
-                                {% endif %}
-                            </div>
-                        </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-semibold text-indigo-600">{{ count }}</span>
+                        <span class="text-sm text-gray-500">{{ count|percentage:total_customers|floatformat:1 }}%</span>
                     </div>
                 </div>
-                {% empty %}
-                <p class="text-sm text-gray-500">No customer status data available</p>
+                {% endwith %}
                 {% endfor %}
+                {% endwith %}
             </div>
         </div>
     </div>
@@ -443,36 +394,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Status Distribution Chart
-        const viewAsChartBtn = document.getElementById('view-as-chart');
-        const viewAsBarsBtn = document.getElementById('view-as-bars');
-        const statusChartDiv = document.getElementById('status-chart');
-        const statusBarsDiv = document.getElementById('status-bars');
-
-        if (viewAsChartBtn && viewAsBarsBtn) {
-            viewAsChartBtn.addEventListener('click', function() {
-                statusChartDiv.classList.remove('hidden');
-                statusBarsDiv.classList.add('hidden');
-                viewAsChartBtn.classList.remove('bg-indigo-100', 'text-indigo-700');
-                viewAsChartBtn.classList.add('bg-indigo-600', 'text-white');
-                viewAsBarsBtn.classList.remove('bg-indigo-600', 'text-white');
-                viewAsBarsBtn.classList.add('bg-gray-100', 'text-gray-700');
-
-                // Initialize chart if not already done
-                if (!window.statusChart) {
-                    initStatusChart();
-                }
-            });
-
-            viewAsBarsBtn.addEventListener('click', function() {
-                statusChartDiv.classList.add('hidden');
-                statusBarsDiv.classList.remove('hidden');
-                viewAsBarsBtn.classList.remove('bg-gray-100', 'text-gray-700');
-                viewAsBarsBtn.classList.add('bg-indigo-600', 'text-white');
-                viewAsChartBtn.classList.remove('bg-indigo-600', 'text-white');
-                viewAsChartBtn.classList.add('bg-indigo-100', 'text-indigo-700');
-            });
-        }
+        // Status Distribution moved to dedicated page
 
         // Performance Chart
         const viewPerformanceChartBtn = document.getElementById('view-performance-chart');
@@ -505,81 +427,7 @@
             });
         }
 
-        // Initialize Status Chart
-        function initStatusChart() {
-            const ctx = document.getElementById('status-chart').getContext('2d');
-
-            // Extract data from the DOM
-            const statusData = {};
-            const statusColors = {};
-
-            document.querySelectorAll('#status-bars .mb-3').forEach(item => {
-                const statusText = item.querySelector('.flex.items-center span.font-medium')?.textContent.trim();
-                const countText = item.querySelector('.text-sm.font-medium')?.textContent.trim();
-
-                if (statusText && countText) {
-                    statusData[statusText] = parseInt(countText, 10) || 0;
-
-                    // Extract color from the progress bar
-                    const progressBar = item.querySelector('.overflow-hidden .flex');
-                    if (progressBar) {
-                        const classList = Array.from(progressBar.classList);
-                        let bgColor = 'rgb(79, 70, 229)'; // Default indigo color
-
-                        if (classList.includes('bg-red-500')) bgColor = 'rgb(239, 68, 68)';
-                        else if (classList.includes('bg-green-500')) bgColor = 'rgb(16, 185, 129)';
-                        else if (classList.includes('bg-yellow-500')) bgColor = 'rgb(245, 158, 11)';
-                        else if (classList.includes('bg-purple-500')) bgColor = 'rgb(168, 85, 247)';
-                        else if (classList.includes('bg-blue-500')) bgColor = 'rgb(59, 130, 246)';
-                        else if (classList.includes('bg-gray-500')) bgColor = 'rgb(107, 114, 128)';
-                        else if (classList.includes('bg-indigo-500')) bgColor = 'rgb(79, 70, 229)';
-                        else if (classList.includes('bg-orange-500')) bgColor = 'rgb(249, 115, 22)';
-                        else if (classList.includes('bg-teal-500')) bgColor = 'rgb(20, 184, 166)';
-                        else if (classList.includes('bg-pink-500')) bgColor = 'rgb(236, 72, 153)';
-
-                        statusColors[statusText] = bgColor;
-                    }
-                }
-            });
-
-            // Create chart
-            window.statusChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(statusData),
-                    datasets: [{
-                        data: Object.values(statusData),
-                        backgroundColor: Object.keys(statusData).map(key => statusColors[key] || 'rgb(79, 70, 229)'),
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                font: {
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.raw || 0;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                                    return `${label}: ${value} (${percentage}%)`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
+        // Status Distribution sidebar implementation (no chart initialization needed)
 
         // Initialize Performance Chart
         function initPerformanceChart() {
