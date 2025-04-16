@@ -50,4 +50,4 @@ USER app
 EXPOSE 8000
 
 # Use Gunicorn with optimized settings
-CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--keep-alive", "5", "--max-requests", "1000", "--max-requests-jitter", "50"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
