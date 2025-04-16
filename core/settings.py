@@ -268,7 +268,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
-
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 

@@ -4,14 +4,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
-from django.utils import timezone
 from django.core.paginator import Paginator
 from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory
-from .forms import CustomerForm, CustomerStatusForm, CustomerAssignForm
+from .forms import CustomerStatusForm, CustomerAssignForm
 import pandas as pd
-import uuid
 import os
 import random
+import tempfile
+
 
 # Authentication Views
 def login_view(request):
@@ -170,19 +170,15 @@ def import_file(request):
         file = request.FILES['file']
         file_name = file.name
         file_ext = os.path.splitext(file_name)[1].lower()
-
         if file_ext not in ['.xlsx', '.csv']:
             messages.error(request, 'Only XLSX and CSV files are supported')
             return redirect('import_file')
 
-        # Create a temporary file to handle the upload
-        import tempfile
         with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
             for chunk in file.chunks():
                 temp_file.write(chunk)
             temp_file_path = temp_file.name
 
-        # Save the file import record
         file_import = FileImport.objects.create(
             file_name=file_name,
             file=file,
@@ -190,71 +186,81 @@ def import_file(request):
         )
 
         try:
-            # Process the file
             if file_ext == '.xlsx':
                 df = pd.read_excel(temp_file_path)
-            else:  # CSV
+            else:
                 df = pd.read_csv(temp_file_path)
-
-            # Clean up the temporary file
             os.unlink(temp_file_path)
 
-            # Validate required columns
             required_columns = ['phone_number']
             for col in required_columns:
                 if col not in df.columns:
                     messages.error(request, f'Required column {col} is missing')
-                    file_import.delete()  # Delete the file import record
+                    file_import.delete()
                     return redirect('import_file')
 
-            # Process the data
-            total_records = len(df)
+            if 'name' not in df.columns:
+                df['name'] = 'Unknown'
+            else:
+                df['name'] = df['name'].fillna('Unknown')
+
+            if 'area' not in df.columns:
+                df['area'] = ''
+            else:
+                df['area'] = df['area'].fillna('')
+
+            if 'date' not in df.columns:
+                df['date'] = None
+            else:
+                df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.date
+
+            if 'remark' not in df.columns:
+                df['remark'] = ''
+            else:
+                df['remark'] = df['remark'].fillna('')
+
+            phone_numbers = df['phone_number'].astype(str).tolist()
+            existing_customers = Customer.objects.filter(phone_number__in=phone_numbers)
+            existing_map = {c.phone_number: c for c in existing_customers}
+
+            update_objs = []
+            new_objs = []
             successful_records = 0
             failed_records = 0
 
-            for _, row in df.iterrows():
+            for row in df.itertuples(index=False):
+                phone = str(getattr(row, 'phone_number'))
+                name = getattr(row, 'name', 'Unknown')
+                area = getattr(row, 'area', '')
+                date = getattr(row, 'date', '')
+                remark = getattr(row, 'remark', '')
+
                 try:
-                    # Check if customer with same phone number already exists
-                    existing_customer = Customer.objects.filter(phone_number=row['phone_number']).first()
-
-                    if existing_customer:
-                        if 'name' in row and pd.notna(row['name']):
-                            existing_customer.name = row['name']
-                        else:
-                            existing_customer.name = 'Unknown'
-                        if 'area' in row and pd.notna(row['area']):
-                            existing_customer.area = row['area']
-                        if 'date' in row and pd.notna(row['date']):
-                            existing_customer.date = row['date']
-                        if 'remark' in row and pd.notna(row['remark']):
-                            existing_customer.remark = row['remark']
-                        existing_customer.save()
+                    if phone in existing_map:
+                        customer = existing_map[phone]
+                        customer.name = name
+                        customer.area = area
+                        customer.date = date
+                        customer.remark = remark
+                        update_objs.append(customer)
                     else:
-                        # Create new customer
-                        customer_data = {
-                            'phone_number': row['phone_number']
-                        }
-
-                        if 'name' in row and pd.notna(row['name']):
-                            customer_data['name'] = row['name']
-                        else:
-                            customer_data['name'] = 'Unknown'
-                        if 'area' in row and pd.notna(row['area']):
-                            customer_data['area'] = row['area']
-                        if 'date' in row and pd.notna(row['date']):
-                            customer_data['date'] = row['date']
-                        if 'remark' in row and pd.notna(row['remark']):
-                            customer_data['remark'] = row['remark']
-
-                        Customer.objects.create(**customer_data)
-
+                        new_objs.append(Customer(
+                            phone_number=phone,
+                            name=name,
+                            area=area,
+                            date=date,
+                            remark=remark
+                        ))
                     successful_records += 1
-                except Exception as e:
+                except Exception:
                     failed_records += 1
-                    print(f"Error processing record: {e}")
 
-            # Update file import record
-            file_import.total_records = total_records
+            if update_objs:
+                Customer.objects.bulk_update(update_objs, ['name', 'area', 'date', 'remark'])
+            if new_objs:
+                Customer.objects.bulk_create(new_objs, batch_size=1000)
+
+            file_import.total_records = len(df)
             file_import.successful_records = successful_records
             file_import.failed_records = failed_records
             file_import.save()
@@ -266,8 +272,7 @@ def import_file(request):
 
         except Exception as e:
             messages.error(request, f'Error processing file: {str(e)}')
-            file_import.delete()  # Delete the file import record
-            # Clean up the temporary file if it still exists
+            file_import.delete()
             if os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
 
@@ -275,7 +280,6 @@ def import_file(request):
 
     return render(request, 'customer/import_file.html')
 
-@login_required
 def import_history(request):
     if not request.user.is_manager():
         return HttpResponseForbidden("You don't have permission to access this page.")
