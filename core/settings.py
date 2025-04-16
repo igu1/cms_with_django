@@ -442,74 +442,74 @@ LOGOUT_REDIRECT_URL = 'login'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Logging configuration
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'filters': {
-        'require_debug_true': {
-            '()': 'django.utils.log.RequireDebugTrue',
-        },
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse',
-        },
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',  # Changed from INFO to DEBUG
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'file': {
-            'level': 'DEBUG',  # Changed from ERROR to DEBUG
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
-            'formatter': 'verbose',
-        },
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler',
-            'formatter': 'verbose',
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-        'django.request': {
-            'handlers': ['mail_admins', 'file'],
-            'level': 'ERROR',
-            'propagate': False,
-        },
-        'customer': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',  # Changed from INFO to DEBUG
-            'propagate': True,
-        },
-        'core': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'whitenoise': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'verbose': {
+#             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+#             'style': '{',
+#         },
+#         'simple': {
+#             'format': '{levelname} {message}',
+#             'style': '{',
+#         },
+#     },
+#     'filters': {
+#         'require_debug_true': {
+#             '()': 'django.utils.log.RequireDebugTrue',
+#         },
+#         'require_debug_false': {
+#             '()': 'django.utils.log.RequireDebugFalse',
+#         },
+#     },
+#     'handlers': {
+#         'console': {
+#             'level': 'DEBUG',  # Changed from INFO to DEBUG
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'simple',
+#         },
+#         'file': {
+#             'level': 'DEBUG',  # Changed from ERROR to DEBUG
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(BASE_DIR, 'logs/django.log'),
+#             'formatter': 'verbose',
+#         },
+#         'mail_admins': {
+#             'level': 'ERROR',
+#             'filters': ['require_debug_false'],
+#             'class': 'django.utils.log.AdminEmailHandler',
+#             'formatter': 'verbose',
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['console', 'file'],
+#             'level': 'INFO',
+#             'propagate': True,
+#         },
+#         'django.request': {
+#             'handlers': ['mail_admins', 'file'],
+#             'level': 'ERROR',
+#             'propagate': False,
+#         },
+#         'customer': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',  # Changed from INFO to DEBUG
+#             'propagate': True,
+#         },
+#         'core': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#         'whitenoise': {
+#             'handlers': ['console', 'file'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
 
 # Custom User Model
 AUTH_USER_MODEL = 'customer.User'
