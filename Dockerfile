@@ -40,9 +40,6 @@ COPY . .
 # Set environment variables from .env file if it exists
 RUN if [ -f .env ]; then export $(cat .env | grep -v '^#' | xargs); fi
 
-# Only run collectstatic if not in debug mode
-RUN if [ "$DEBUG" != "True" ]; then python manage.py collectstatic --noinput; fi
-
 # Create media and static directories with proper permissions
 RUN mkdir -p /app/media /app/staticfiles
 RUN chown -R app:app /app
