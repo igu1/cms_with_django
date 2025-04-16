@@ -1,0 +1,139 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'js/task-countdown.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/task-countdown.css' %}">
+{% endblock %}
+
+{% block after_field_sets %}
+{{ block.super }}
+
+{% if original and original.due_date and original.status != 'COMPLETED' and original.status != 'CANCELLED' %}
+<div class="task-countdown-widget">
+    <h3>Time Remaining</h3>
+    <div id="task-countdown-display" 
+         data-due-date="{{ original.due_date|date:'c' }}"
+         data-status="{{ original.status }}">
+        <div class="countdown-timer">
+            <div class="countdown-value" id="countdown-days">--</div>
+            <div class="countdown-label">Days</div>
+        </div>
+        <div class="countdown-timer">
+            <div class="countdown-value" id="countdown-hours">--</div>
+            <div class="countdown-label">Hours</div>
+        </div>
+        <div class="countdown-timer">
+            <div class="countdown-value" id="countdown-minutes">--</div>
+            <div class="countdown-label">Minutes</div>
+        </div>
+        <div class="countdown-timer">
+            <div class="countdown-value" id="countdown-seconds">--</div>
+            <div class="countdown-label">Seconds</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const countdownDisplay = document.getElementById('task-countdown-display');
+        if (countdownDisplay) {
+            const dueDate = new Date(countdownDisplay.getAttribute('data-due-date'));
+            
+            function updateDetailCountdown() {
+                const now = new Date();
+                let timeRemaining = dueDate - now;
+                
+                // Handle overdue tasks
+                let isOverdue = false;
+                if (timeRemaining < 0) {
+                    timeRemaining = Math.abs(timeRemaining);
+                    isOverdue = true;
+                }
+                
+                // Calculate time components
+                const days = Math.floor(timeRemaining / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeRemaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeRemaining % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeRemaining % (1000 * 60)) / 1000);
+                
+                // Update display
+                document.getElementById('countdown-days').textContent = days;
+                document.getElementById('countdown-hours').textContent = hours;
+                document.getElementById('countdown-minutes').textContent = minutes;
+                document.getElementById('countdown-seconds').textContent = seconds;
+                
+                // Set color based on time remaining
+                if (isOverdue) {
+                    countdownDisplay.classList.add('overdue');
+                    countdownDisplay.classList.remove('due-soon', 'upcoming');
+                } else if (timeRemaining < 24 * 60 * 60 * 1000) {
+                    countdownDisplay.classList.add('due-soon');
+                    countdownDisplay.classList.remove('overdue', 'upcoming');
+                } else {
+                    countdownDisplay.classList.add('upcoming');
+                    countdownDisplay.classList.remove('overdue', 'due-soon');
+                }
+            }
+            
+            // Update immediately and then every second
+            updateDetailCountdown();
+            setInterval(updateDetailCountdown, 1000);
+        }
+    });
+</script>
+
+<style>
+    .task-countdown-widget {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 15px;
+        margin: 20px 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-countdown-widget h3 {
+        margin-top: 0;
+        margin-bottom: 15px;
+        font-size: 16px;
+        color: #333;
+    }
+    
+    #task-countdown-display {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+    }
+    
+    .countdown-timer {
+        padding: 10px;
+        min-width: 60px;
+    }
+    
+    .countdown-value {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .countdown-label {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    /* Colors for different states */
+    #task-countdown-display.overdue .countdown-value {
+        color: #C62828;
+    }
+    
+    #task-countdown-display.due-soon .countdown-value {
+        color: #F57F17;
+    }
+    
+    #task-countdown-display.upcoming .countdown-value {
+        color: #1565C0;
+    }
+</style>
+{% endif %}
+{% endblock %}

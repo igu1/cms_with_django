@@ -109,6 +109,10 @@
                             <i class="fas fa-chart-pie mr-3 text-white"></i>
                             <span>Customer Status</span>
                         </a>
+                        <a href="{% url 'bulk_status_update' %}" class="{% if 'bulk-status-update' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                            <i class="fas fa-tasks mr-3 text-white"></i>
+                            <span>Bulk Status Update</span>
+                        </a>
                         <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                             <i class="fas fa-file-import mr-3 text-white"></i>
                             <span>Import Data</span>
@@ -118,6 +122,23 @@
                             <span>Import History</span>
                         </a>
                         {% endif %}
+                        
+                        <!-- Task Management Section -->
+                        <div class="pt-4 mt-4 border-t border-gray-700">
+                            <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                Task Management
+                            </h3>
+                            <div class="mt-2 space-y-1">
+                                <a href="{% url 'task_list' %}" class="{% if 'tasks' in request.path and 'my-tasks' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                                    <i class="fas fa-tasks mr-3 text-white"></i>
+                                    <span>All Tasks</span>
+                                </a>
+                                <a href="{% url 'my_tasks' %}" class="{% if 'my-tasks' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                                    <i class="fas fa-clipboard-check mr-3 text-white"></i>
+                                    <span>My Tasks</span>
+                                </a>
+                            </div>
+                        </div>
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <a href="{% url 'logout' %}" class="text-gray-300 hover:bg-[#152548] hover:text-white group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                                 <i class="fas fa-sign-out-alt mr-3 text-red-400"></i>
@@ -188,6 +209,10 @@
                             <i class="fas fa-chart-pie mr-3 text-white"></i>
                             <span>Customer Status</span>
                         </a>
+                        <a href="{% url 'bulk_status_update' %}" class="{% if 'bulk-status-update' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                            <i class="fas fa-tasks mr-3 text-white"></i>
+                            <span>Bulk Status Update</span>
+                        </a>
                         <a href="{% url 'import_file' %}" class="{% if 'import' in request.path and 'history' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                             <i class="fas fa-file-import mr-3 text-white"></i>
                             <span>Import Data</span>
@@ -197,6 +222,24 @@
                             <span>Import History</span>
                         </a>
                         {% endif %}
+                        
+                        <!-- Task Management Section -->
+                        <div class="pt-4 mt-4 border-t border-gray-700">
+                            <h3 class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                                Task Management
+                            </h3>
+                            <div class="mt-2 space-y-1">
+                                <a href="{% url 'task_list' %}" class="{% if 'tasks' in request.path and 'my-tasks' not in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                                    <i class="fas fa-tasks mr-3 text-white"></i>
+                                    <span>All Tasks</span>
+                                </a>
+                                <a href="{% url 'my_tasks' %}" class="{% if 'my-tasks' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+                                    <i class="fas fa-clipboard-check mr-3 text-white"></i>
+                                    <span>My Tasks</span>
+                                </a>
+                            </div>
+                        </div>
+                        
                         <div class="pt-4 mt-4 border-t border-gray-700">
                             <a href="{% url 'logout' %}" class="text-gray-300 hover:bg-[#152548] hover:text-white group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
                                 <i class="fas fa-sign-out-alt mr-3 text-red-400"></i>

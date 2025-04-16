@@ -1,0 +1,89 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="{% static 'js/task-countdown.js' %}"></script>
+<link rel="stylesheet" href="{% static 'css/task-countdown.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="task-dashboard">
+  <div class="task-stats">
+    <div class="task-stat-item">
+      <h3>Tasks Overview</h3>
+      <div class="task-stat-grid">
+        <div class="task-stat-box" style="background-color: #E3F2FD; border-left: 4px solid #1565C0;">
+          <div class="task-stat-value">{{ cl.model_admin.get_queryset(request).count }}</div>
+          <div class="task-stat-label">Total Tasks</div>
+        </div>
+        <div class="task-stat-box" style="background-color: #FFF8E1; border-left: 4px solid #F57F17;">
+          <div class="task-stat-value">{{ cl.model_admin.get_queryset(request).filter(status='PENDING').count }}</div>
+          <div class="task-stat-label">Pending</div>
+        </div>
+        <div class="task-stat-box" style="background-color: #FFEBEE; border-left: 4px solid #C62828;">
+          <div class="task-stat-value">{{ cl.model_admin.get_queryset(request).filter(status='PENDING', due_date__lt=now).count }}</div>
+          <div class="task-stat-label">Overdue</div>
+        </div>
+        <div class="task-stat-box" style="background-color: #E8F5E9; border-left: 4px solid #2E7D32;">
+          <div class="task-stat-value">{{ cl.model_admin.get_queryset(request).filter(status='COMPLETED').count }}</div>
+          <div class="task-stat-label">Completed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  {{ block.super }}
+</div>
+
+<style>
+  .task-dashboard {
+    margin-bottom: 20px;
+  }
+  
+  .task-stats {
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .task-stat-item h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .task-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+  
+  .task-stat-box {
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .task-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .task-stat-label {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  /* Countdown styling */
+  .countdown {
+    display: inline-block;
+    font-size: 0.8em;
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}

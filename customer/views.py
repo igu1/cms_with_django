@@ -6,12 +6,13 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
 from django.utils import timezone
 from django.core.paginator import Paginator
-from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory
-from .forms import CustomerForm, CustomerStatusForm, CustomerAssignForm
+from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory, CustomerNote, NoteCategory, Task, TaskStatus, TaskPriority, TaskComment
+from .forms import CustomerForm, CustomerStatusForm, CustomerAssignForm, CustomerNoteForm, TaskForm, TaskCommentForm, TaskFilterForm
 import pandas as pd
 import uuid
 import os
 import random
+from datetime import datetime, timedelta
 
 # Authentication Views
 def login_view(request):
@@ -335,17 +336,33 @@ def customer_detail(request, customer_id):
         return HttpResponseForbidden("You don't have permission to view this customer.")
 
     status_history = customer.status_history.all().order_by('-changed_at')
+    notes = customer.notes_history.all()
 
     # Initialize forms
     status_form = CustomerStatusForm(initial={'status': customer.status})
     assign_form = CustomerAssignForm(initial={'assigned_to': customer.assigned_to})
+    note_form = CustomerNoteForm()
+
+    # Handle note form submission
+    if request.method == 'POST' and 'add_note' in request.POST:
+        note_form = CustomerNoteForm(request.POST)
+        if note_form.is_valid():
+            note = note_form.save(commit=False)
+            note.customer = customer
+            note.created_by = request.user
+            note.save()
+            messages.success(request, 'Note added successfully.')
+            return redirect('customer_detail', customer_id=customer_id)
 
     context = {
         'customer': customer,
         'status_history': status_history,
+        'notes': notes,
         'statuses': CustomerStatus.choices,
         'status_form': status_form,
         'assign_form': assign_form,
+        'note_form': note_form,
+        'note_categories': NoteCategory.choices,
         'sales_users': User.objects.filter(role=User.SALES)
     }
 
@@ -486,3 +503,221 @@ def random_assign_customers(request):
     )
 
     return redirect('unassigned_customers')
+
+@login_required
+def bulk_status_update(request):
+    if not request.user.is_manager():
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')
+    
+    # Get all unique areas for filtering
+    areas = Customer.objects.exclude(area__isnull=True).exclude(area='').values_list('area', flat=True).distinct().order_by('area')
+    
+    # Get all statuses for the form
+    statuses = CustomerStatus.choices
+    
+    # Get all customers for the table
+    customers = Customer.objects.all().select_related('assigned_to').order_by('-created_at')
+    
+    if request.method == 'POST':
+        # Process the form submission
+        new_status = request.POST.get('new_status')
+        customer_ids = request.POST.getlist('customer_ids')
+        add_note = request.POST.get('add_note')
+        
+        if not new_status or not customer_ids:
+            messages.error(request, 'Please select a status and at least one customer.')
+            return redirect('bulk_status_update')
+        
+        # Update the status for all selected customers
+        updated_count = 0
+        for customer_id in customer_ids:
+            try:
+                customer = Customer.objects.get(id=customer_id)
+                previous_status = customer.status
+                
+                # Only update if the status is different
+                if customer.status != new_status:
+                    customer.status = new_status
+                    customer.save()
+                    
+                    # Create status history entry
+                    CustomerStatusHistory.objects.create(
+                        customer=customer,
+                        previous_status=previous_status,
+                        new_status=new_status,
+                        changed_by=request.user,
+                        notes=add_note if add_note else None
+                    )
+                    
+                    updated_count += 1
+            except Customer.DoesNotExist:
+                continue
+        
+        messages.success(request, f'Successfully updated {updated_count} customers to {dict(CustomerStatus.choices).get(new_status)}.')
+        return redirect('bulk_status_update')
+    
+    context = {
+        'customers': customers,
+        'statuses': statuses,
+        'areas': areas,
+    }
+    
+    return render(request, 'customer/bulk_status_update.html', context)
+
+@login_required
+def add_customer_note(request, customer_id):
+    customer = get_object_or_404(Customer, id=customer_id)
+    
+    # Check if user has permission to add notes to this customer
+    if not request.user.is_manager() and customer.assigned_to != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    form = CustomerNoteForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'error': 'Invalid form data'}, status=400)
+    
+    note = form.save(commit=False)
+    note.customer = customer
+    note.created_by = request.user
+    note.save()
+    
+    return JsonResponse({
+        'success': True,
+        'note_id': str(note.id),
+        'category': note.get_category_display(),
+        'content': note.content,
+        'created_at': note.created_at.strftime('%Y-%m-%d %H:%M'),
+        'created_by': note.created_by.get_full_name() or note.created_by.username,
+        'is_pinned': note.is_pinned
+    })
+
+@login_required
+def delete_customer_note(request, note_id):
+    note = get_object_or_404(CustomerNote, id=note_id)
+    
+    # Check if user has permission to delete this note
+    if not request.user.is_manager() and note.created_by != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    note.delete()
+    
+    return JsonResponse({'success': True})
+
+@login_required
+def toggle_pin_note(request, note_id):
+    note = get_object_or_404(CustomerNote, id=note_id)
+    
+    # Check if user has permission to pin/unpin this note
+    if not request.user.is_manager() and note.customer.assigned_to != request.user:
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    note.is_pinned = not note.is_pinned
+    note.save()
+    
+    return JsonResponse({
+        'success': True,
+        'is_pinned': note.is_pinned
+    })
+
+@login_required
+def bulk_status_update(request):
+    """View for updating multiple customer statuses at once"""
+    if not request.user.is_manager():
+        return HttpResponseForbidden("You don't have permission to access this page.")
+    
+    # Get all available statuses for the form
+    statuses = CustomerStatus.choices
+    
+    if request.method == 'POST':
+        # Get form data
+        new_status = request.POST.get('new_status')
+        filter_status = request.POST.get('filter_status')
+        filter_assigned = request.POST.get('filter_assigned')
+        filter_area = request.POST.get('filter_area')
+        customer_ids = request.POST.getlist('customer_ids')
+        add_note = request.POST.get('add_note', '')
+        
+        # Validate the new status
+        if not new_status or new_status not in dict(CustomerStatus.choices):
+            messages.error(request, 'Please select a valid status')
+            return redirect('bulk_status_update')
+        
+        # Build the query based on filters
+        query = Q()
+        
+        # If specific customers were selected
+        if customer_ids:
+            query &= Q(id__in=customer_ids)
+        else:
+            # Apply filters
+            if filter_status:
+                query &= Q(status=filter_status)
+            
+            if filter_assigned == 'assigned':
+                query &= Q(assigned_to__isnull=False)
+            elif filter_assigned == 'unassigned':
+                query &= Q(assigned_to__isnull=True)
+            
+            if filter_area:
+                query &= Q(area__icontains=filter_area)
+        
+        # Get the customers to update
+        customers_to_update = Customer.objects.filter(query)
+        
+        if not customers_to_update.exists():
+            messages.error(request, 'No customers match the selected criteria')
+            return redirect('bulk_status_update')
+        
+        # Count of updated customers
+        update_count = 0
+        
+        # Update each customer's status and create history records
+        for customer in customers_to_update:
+            if customer.status != new_status:  # Only update if status is different
+                previous_status = customer.status
+                customer.status = new_status
+                customer.save()
+                
+                # Create status history record
+                CustomerStatusHistory.objects.create(
+                    customer=customer,
+                    previous_status=previous_status,
+                    new_status=new_status,
+                    changed_by=request.user,
+                    notes=f"Bulk update: {add_note}" if add_note else "Bulk update"
+                )
+                
+                update_count += 1
+        
+        if update_count > 0:
+            messages.success(request, f'Successfully updated {update_count} customers to {dict(CustomerStatus.choices)[new_status]}')
+        else:
+            messages.info(request, 'No customers needed status updates')
+        
+        return redirect('bulk_status_update')
+    
+    # For GET requests, prepare the form
+    # Get unique areas for the filter dropdown
+    areas = Customer.objects.exclude(area__isnull=True).exclude(area='').values_list('area', flat=True).distinct().order_by('area')
+    
+    # Get all customers for the selection table
+    customers = Customer.objects.all().select_related('assigned_to')
+    
+    context = {
+        'statuses': statuses,
+        'areas': areas,
+        'customers': customers,
+        'page_title': 'Bulk Status Update'
+    }
+    
+    return render(request, 'customer/bulk_status_update.html', context)

@@ -1,0 +1,134 @@
+/**
+ * Task Countdown Styles
+ */
+
+/* Task list countdown styles */
+.task-countdown {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+    font-size: 0.8em;
+}
+
+.task-countdown.overdue {
+    background-color: rgba(198, 40, 40, 0.1);
+}
+
+.task-countdown.due-soon {
+    background-color: rgba(245, 127, 23, 0.1);
+}
+
+.task-countdown.upcoming {
+    background-color: rgba(21, 101, 192, 0.1);
+}
+
+/* Task detail countdown styles */
+.task-countdown-widget {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 20px 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.task-countdown-widget h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+#task-countdown-display {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.countdown-timer {
+    padding: 10px;
+    min-width: 60px;
+}
+
+.countdown-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.countdown-label {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Colors for different states */
+#task-countdown-display.overdue .countdown-value {
+    color: #C62828;
+}
+
+#task-countdown-display.due-soon .countdown-value {
+    color: #F57F17;
+}
+
+#task-countdown-display.upcoming .countdown-value {
+    color: #1565C0;
+}
+
+/* Task dashboard styles */
+.task-dashboard {
+    margin-bottom: 20px;
+}
+
+.task-stats {
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.task-stat-item h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+.task-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.task-stat-box {
+    padding: 15px;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.task-stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.task-stat-label {
+    font-size: 14px;
+    color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .task-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    #task-countdown-display {
+        flex-wrap: wrap;
+    }
+    
+    .countdown-timer {
+        flex: 0 0 50%;
+        margin-bottom: 10px;
+    }
+}

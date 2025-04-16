@@ -1,0 +1,5 @@
+<!-- Include this file in your base.html to add the Bulk Status Update link -->
+<a href="{% url 'bulk_status_update' %}" class="{% if 'bulk-status-update' in request.path %}bg-[#152548] text-white{% else %}text-gray-300 hover:bg-[#152548] hover:text-white{% endif %} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ease-in-out transform hover:translate-x-1">
+    <i class="fas fa-tasks mr-3 text-white"></i>
+    <span>Bulk Status Update</span>
+</a>
