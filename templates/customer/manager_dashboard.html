@@ -267,17 +267,10 @@
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Student Counsellor Performance</h3>
                 <p class="mt-1 text-sm text-gray-500">Track the performance of your student counsellors</p>
             </div>
-            <div class="flex items-center space-x-2">
-                <button id="view-performance-chart" class="text-xs px-2 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors duration-200">
-                    <i class="fas fa-chart-bar mr-1"></i> Chart View
-                </button>
-                <button id="view-performance-table" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
-                    <i class="fas fa-table mr-1"></i> Table View
-                </button>
-            </div>
+            <!-- Chart view removed as requested -->
         </div>
-        <div id="performance-chart" class="hidden h-64 mb-4"></div>
-        <div id="performance-table" class="mt-4 flow-root">
+        <!-- Table view is now the only view -->
+        <div class="mt-4 flow-root">
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <table class="table-enhanced min-w-full divide-y divide-gray-300">
@@ -396,116 +389,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Status Distribution moved to dedicated page
 
-        // Performance Chart
-        const viewPerformanceChartBtn = document.getElementById('view-performance-chart');
-        const viewPerformanceTableBtn = document.getElementById('view-performance-table');
-        const performanceChartDiv = document.getElementById('performance-chart');
-        const performanceTableDiv = document.getElementById('performance-table');
-
-        if (viewPerformanceChartBtn && viewPerformanceTableBtn) {
-            viewPerformanceChartBtn.addEventListener('click', function() {
-                performanceChartDiv.classList.remove('hidden');
-                performanceTableDiv.classList.add('hidden');
-                viewPerformanceChartBtn.classList.remove('bg-indigo-100', 'text-indigo-700');
-                viewPerformanceChartBtn.classList.add('bg-indigo-600', 'text-white');
-                viewPerformanceTableBtn.classList.remove('bg-indigo-600', 'text-white');
-                viewPerformanceTableBtn.classList.add('bg-gray-100', 'text-gray-700');
-
-                // Initialize chart if not already done
-                if (!window.performanceChart) {
-                    initPerformanceChart();
-                }
-            });
-
-            viewPerformanceTableBtn.addEventListener('click', function() {
-                performanceChartDiv.classList.add('hidden');
-                performanceTableDiv.classList.remove('hidden');
-                viewPerformanceTableBtn.classList.remove('bg-gray-100', 'text-gray-700');
-                viewPerformanceTableBtn.classList.add('bg-indigo-600', 'text-white');
-                viewPerformanceChartBtn.classList.remove('bg-indigo-600', 'text-white');
-                viewPerformanceChartBtn.classList.add('bg-indigo-100', 'text-indigo-700');
-            });
-        }
+        // Performance Chart view removed as requested
+        // Table is now always visible by default
 
         // Status Distribution sidebar implementation (no chart initialization needed)
 
-        // Initialize Performance Chart
-        function initPerformanceChart() {
-            const ctx = document.getElementById('performance-chart').getContext('2d');
-
-            // Extract data from the table
-            const counsellors = [];
-            const assignedData = [];
-            const admissionData = [];
-
-            document.querySelectorAll('#performance-table tbody tr').forEach(row => {
-                const nameCell = row.querySelector('td:nth-child(1)');
-                const assignedCell = row.querySelector('td:nth-child(2) span');
-                const admissionCell = row.querySelector('td:nth-child(8) span');
-
-                if (nameCell && assignedCell && admissionCell) {
-                    const name = nameCell.querySelector('.font-medium')?.textContent.trim();
-                    const assigned = parseInt(assignedCell.textContent.trim(), 10) || 0;
-                    const admissions = parseInt(admissionCell.textContent.trim(), 10) || 0;
-
-                    if (name) {
-                        counsellors.push(name);
-                        assignedData.push(assigned);
-                        admissionData.push(admissions);
-                    }
-                }
-            });
-
-            // Create chart
-            window.performanceChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: counsellors,
-                    datasets: [
-                        {
-                            label: 'Assigned',
-                            data: assignedData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgb(59, 130, 246)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Admissions',
-                            data: admissionData,
-                            backgroundColor: 'rgba(236, 72, 153, 0.7)',
-                            borderColor: 'rgb(236, 72, 153)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.dataset.label || '';
-                                    const value = context.raw || 0;
-                                    return `${label}: ${value}`;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
+        // Chart initialization function removed as requested
     });
 </script>
 {% endblock %}

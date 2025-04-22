@@ -25,7 +25,7 @@
                 </button>
             </div>
         </div>
-        
+
         <!-- List View (Default) -->
         <div id="status-list-view" class="mt-4">
             <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
@@ -86,7 +86,7 @@
                                     {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
                                     {% elif status == 'REGISTRATION' %}bg-teal-500
                                     {% elif status == 'ADMISSION' %}bg-pink-500
-                                    {% else %}bg-indigo-500{% endif %}" 
+                                    {% else %}bg-indigo-500{% endif %}"
                                     style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
                                 </div>
                             </div>
@@ -106,7 +106,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Grid View (Hidden by default) -->
         <div id="status-grid-view" class="mt-4 hidden">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,7 +178,7 @@
                             {% elif status == 'CAMPUS_VISIT' %}bg-orange-500
                             {% elif status == 'REGISTRATION' %}bg-teal-500
                             {% elif status == 'ADMISSION' %}bg-pink-500
-                            {% else %}bg-indigo-500{% endif %}" 
+                            {% else %}bg-indigo-500{% endif %}"
                             style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
                         </div>
                     </div>
@@ -205,9 +205,25 @@
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Customer Conversion Funnel</h3>
                 <p class="mt-1 text-sm text-gray-500">Visualize the customer journey from initial contact to admission</p>
             </div>
+            <div class="flex items-center space-x-2">
+                <button id="view-funnel-chart" class="text-xs px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200">
+                    <i class="fas fa-chart-bar mr-1"></i> Chart View
+                </button>
+                <button id="view-funnel-list" class="text-xs px-3 py-1.5 rounded bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors duration-200">
+                    <i class="fas fa-list mr-1"></i> List View
+                </button>
+            </div>
         </div>
-        
-        <div class="mt-4">
+
+        <!-- Funnel Chart View (Default) -->
+        <div id="funnel-chart-view" class="mt-4">
+            <div class="h-96 w-full">
+                <canvas id="conversion-funnel-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Funnel List View (Hidden by default) -->
+        <div id="funnel-list-view" class="mt-4 hidden">
             <div class="relative py-8">
                 <!-- Funnel Steps -->
                 {% with funnel_steps="VALID,CALL_NOT_ATTENDED,PLAN_PRESENTED,INTERESTED,SHORTLISTED,CAMPUS_VISIT,REGISTRATION,ADMISSION"|split:"," %}
@@ -264,7 +280,7 @@
                                 {% elif step == 'CAMPUS_VISIT' %}bg-orange-500
                                 {% elif step == 'REGISTRATION' %}bg-teal-500
                                 {% elif step == 'ADMISSION' %}bg-pink-500
-                                {% else %}bg-indigo-500{% endif %}" 
+                                {% else %}bg-indigo-500{% endif %}"
                                 style="width: {% if total_customers > 0 %}{{ count|percentage:total_customers|floatformat:0 }}{% else %}0{% endif %}%">
                             </div>
                         </div>
@@ -282,6 +298,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Status Distribution - Tab implementation
@@ -307,6 +326,118 @@
                 viewStatusGridBtn.classList.add('bg-indigo-600', 'text-white');
                 viewStatusListBtn.classList.remove('bg-indigo-600', 'text-white');
                 viewStatusListBtn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+        }
+
+        // Conversion Funnel - Tab implementation
+        const viewFunnelChartBtn = document.getElementById('view-funnel-chart');
+        const viewFunnelListBtn = document.getElementById('view-funnel-list');
+        const funnelChartView = document.getElementById('funnel-chart-view');
+        const funnelListView = document.getElementById('funnel-list-view');
+
+        if (viewFunnelChartBtn && viewFunnelListBtn) {
+            viewFunnelChartBtn.addEventListener('click', function() {
+                funnelChartView.classList.remove('hidden');
+                funnelListView.classList.add('hidden');
+                viewFunnelChartBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewFunnelChartBtn.classList.add('bg-indigo-600', 'text-white');
+                viewFunnelListBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewFunnelListBtn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+
+            viewFunnelListBtn.addEventListener('click', function() {
+                funnelChartView.classList.add('hidden');
+                funnelListView.classList.remove('hidden');
+                viewFunnelListBtn.classList.remove('bg-gray-100', 'text-gray-700');
+                viewFunnelListBtn.classList.add('bg-indigo-600', 'text-white');
+                viewFunnelChartBtn.classList.remove('bg-indigo-600', 'text-white');
+                viewFunnelChartBtn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+        }
+
+        // Initialize Conversion Funnel Chart
+        initConversionFunnelChart();
+
+        function initConversionFunnelChart() {
+            const ctx = document.getElementById('conversion-funnel-chart').getContext('2d');
+
+            // Define the funnel steps and their order
+            const funnelSteps = [
+                { key: 'VALID', label: 'Valid Leads', color: 'rgb(34, 197, 94)' },
+                { key: 'CALL_NOT_ATTENDED', label: 'Initial Contact', color: 'rgb(234, 179, 8)' },
+                { key: 'PLAN_PRESENTED', label: 'Plan Presentation', color: 'rgb(168, 85, 247)' },
+                { key: 'INTERESTED', label: 'Interest Shown', color: 'rgb(59, 130, 246)' },
+                { key: 'SHORTLISTED', label: 'Shortlisted', color: 'rgb(34, 197, 94)' },
+                { key: 'CAMPUS_VISIT', label: 'Campus Visit', color: 'rgb(249, 115, 22)' },
+                { key: 'REGISTRATION', label: 'Registration', color: 'rgb(20, 184, 166)' },
+                { key: 'ADMISSION', label: 'Admission', color: 'rgb(236, 72, 153)' }
+            ];
+
+            // Extract data from the template context
+            const statusData = {
+                {% for status, count in status_data.items %}
+                '{{ status }}': {{ count }},
+                {% endfor %}
+            };
+
+            const totalCustomers = {{ total_customers }};
+
+            // Prepare data for the chart
+            const labels = funnelSteps.map(step => step.label);
+            const data = funnelSteps.map(step => statusData[step.key] || 0);
+            const backgroundColors = funnelSteps.map(step => step.color);
+
+            // Create the chart
+            const conversionFunnelChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Customers',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors.map(color => color.replace('rgb', 'rgba').replace(')', ', 1)')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = totalCustomers > 0 ? (value / totalCustomers * 100).toFixed(1) : 0;
+                                    return `${value} customers (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                display: true,
+                                drawBorder: true,
+                                drawOnChartArea: true,
+                                drawTicks: true,
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
             });
         }
     });
