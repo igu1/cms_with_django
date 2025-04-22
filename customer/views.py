@@ -94,24 +94,24 @@ def customer_status(request):
     """View for the Customer Status Distribution page"""
     if not request.user.is_authenticated:
         return redirect('login')
-        
+
     total_customers = Customer.objects.count()
-    
+
     # Get counts for each status
     status_counts = Customer.objects.values('status').annotate(count=Count('status'))
     status_data = {status['status']: status['count'] for status in status_counts}
-    
+
     # Make sure all statuses are represented in the data, even if count is 0
     for status in CustomerStatus.values:
         if status not in status_data:
             status_data[status] = 0
-    
+
     context = {
         'total_customers': total_customers,
         'status_data': status_data,
         'page_title': 'Customer Status Distribution'
     }
-    
+
     return render(request, 'customer/customer_status.html', context)
 
 @login_required
@@ -447,19 +447,55 @@ def bulk_assign_customers(request):
 
     sales_user_id = request.POST.get('sales_user')
     customer_ids = request.POST.getlist('customer_ids')
+    bulk_count = request.POST.get('bulk_count', '0')
 
-    if not sales_user_id or not customer_ids:
-        messages.error(request, 'Please select a student counsellor and at least one customer')
+    if not sales_user_id:
+        messages.error(request, 'Please select a student counsellor')
         return redirect('unassigned_customers')
 
     sales_user = get_object_or_404(User, id=sales_user_id, role=User.SALES)
+
+    # Handle bulk assignment (100, 200, 500)
+    if bulk_count and bulk_count != '0':
+        try:
+            count = int(bulk_count)
+            if count not in [100, 200, 500]:
+                messages.error(request, 'Invalid bulk assignment count')
+                return redirect('unassigned_customers')
+
+            # Get the specified number of unassigned customers
+            unassigned_customers = Customer.objects.filter(assigned_to__isnull=True).order_by('-created_at')[:count]
+            unassigned_ids = [str(customer.id) for customer in unassigned_customers]
+
+            if not unassigned_ids:
+                messages.warning(request, 'No unassigned customers available')
+                return redirect('unassigned_customers')
+
+            # Update customers
+            Customer.objects.filter(id__in=unassigned_ids).update(assigned_to=sales_user)
+
+            messages.success(
+                request,
+                f'{len(unassigned_ids)} customers assigned to {sales_user.get_full_name() or sales_user.username}'
+            )
+
+            return redirect('unassigned_customers')
+
+        except ValueError:
+            messages.error(request, 'Invalid bulk assignment count')
+            return redirect('unassigned_customers')
+
+    # Handle manual selection
+    if not customer_ids:
+        messages.error(request, 'Please select at least one customer')
+        return redirect('unassigned_customers')
 
     # Update customers
     Customer.objects.filter(id__in=customer_ids).update(assigned_to=sales_user)
 
     messages.success(
         request,
-        f'{len(customer_ids)} customers assigned to {sales_user.username}'
+        f'{len(customer_ids)} customers assigned to {sales_user.get_full_name() or sales_user.username}'
     )
 
     return redirect('unassigned_customers')
