@@ -53,7 +53,16 @@ class CustomerStatus(models.TextChoices):
 
 class CustomerManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().order_by('name__isnull', 'name', '-created_at')
+        # Using Case/When to handle null values in ordering
+        from django.db.models import Case, When, Value, IntegerField
+        return super().get_queryset().annotate(
+            name_null=Case(
+                When(name__isnull=True, then=Value(1)),
+                When(name='', then=Value(1)),
+                default=Value(0),
+                output_field=IntegerField()
+            )
+        ).order_by('name_null', 'name', '-created_at')
 
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -82,7 +91,9 @@ class Customer(models.Model):
         return self.phone_number
 
     class Meta:
-        ordering = ['name__isnull', 'name', '-created_at']
+        # We can't use complex ordering in Meta, so we'll rely on the manager
+        # This is a fallback ordering
+        ordering = ['name', '-created_at']
 
 
 
