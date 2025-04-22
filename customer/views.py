@@ -464,12 +464,19 @@ def bulk_assign_customers(request):
                 return redirect('unassigned_customers')
 
             # Get the specified number of unassigned customers
-            unassigned_customers = Customer.objects.filter(assigned_to__isnull=True).order_by('-created_at')[:count]
-            unassigned_ids = [str(customer.id) for customer in unassigned_customers]
+            unassigned_customers = Customer.objects.filter(assigned_to__isnull=True).order_by('-created_at')
+            total_available = unassigned_customers.count()
 
-            if not unassigned_ids:
+            if total_available == 0:
                 messages.warning(request, 'No unassigned customers available')
                 return redirect('unassigned_customers')
+
+            if total_available < count:
+                messages.info(request, f'Only {total_available} unassigned customers available. Will assign all of them.')
+                count = total_available
+
+            unassigned_customers = unassigned_customers[:count]
+            unassigned_ids = [str(customer.id) for customer in unassigned_customers]
 
             # Update customers
             Customer.objects.filter(id__in=unassigned_ids).update(assigned_to=sales_user)

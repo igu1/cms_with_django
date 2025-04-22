@@ -144,6 +144,17 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -182,6 +193,10 @@
                     if (selectAllCheckbox) selectAllCheckbox.checked = false;
                     customerCheckboxes.forEach(checkbox => { checkbox.checked = false; });
 
+                    // Show loading indicator
+                    this.disabled = true;
+                    this.innerHTML = '<span class="spinner inline-block w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin mr-2"></span> Assigning...';
+
                     // Submit the form
                     bulkAssignForm.submit();
                 });
@@ -200,7 +215,7 @@
                     return;
                 }
 
-                // If no bulk count is specified, ensure at least one customer is selected
+                // Only check for selected customers if not using bulk assignment
                 if (bulkCount === '0' && checkedCustomers.length === 0) {
                     e.preventDefault();
                     alert('Please select at least one customer or use a bulk assignment button');
