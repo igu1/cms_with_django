@@ -51,6 +51,10 @@ class CustomerStatus(models.TextChoices):
 
 
 
+class CustomerManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().order_by('name__isnull', 'name', '-created_at')
+
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, db_index=True, null=True, blank=True)
@@ -71,12 +75,14 @@ class Customer(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    objects = CustomerManager()
 
     def __str__(self):
         return self.phone_number
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['name__isnull', 'name', '-created_at']
 
 
 
