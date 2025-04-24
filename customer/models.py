@@ -67,7 +67,7 @@ class CustomerManager(models.Manager):
 class Customer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=255, db_index=True, null=True, blank=True)
-    phone_number = models.CharField(max_length=20, db_index=True)
+    phone_number = models.CharField(max_length=20, db_index=True, unique=True)
     area = models.CharField(max_length=255, blank=True, null=True, db_index=True)
     date = models.DateField(blank=True, null=True, db_index=True)
     remark = models.TextField(blank=True, null=True)
@@ -84,7 +84,7 @@ class Customer(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     objects = CustomerManager()
 
     def __str__(self):
@@ -126,5 +126,20 @@ class CustomerStatusHistory(models.Model):
     def __str__(self):
         return f"{self.customer.name} - {self.new_status}"
 
+
+class FollowUpReminder(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='follow_ups', db_index=True)
+    counselor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follow_up_reminders', db_index=True)
+    follow_up_date = models.DateField(db_index=True)
+    notes = models.TextField(blank=True, null=True)
+    status_history = models.OneToOneField(CustomerStatusHistory, on_delete=models.CASCADE, related_name='follow_up_reminder', null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Follow-up for {self.customer.name} on {self.follow_up_date}"
+
     class Meta:
-        ordering = ['-changed_at']
+        ordering = ['follow_up_date', '-created_at']

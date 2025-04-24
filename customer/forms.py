@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from .models import Customer, CustomerStatus, User
 
 class CustomerForm(forms.ModelForm):
@@ -28,6 +29,14 @@ class CustomerStatusForm(forms.Form):
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'rows': 3, 'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md'})
+    )
+    follow_up_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md',
+            'min': timezone.now().date().isoformat(),
+        })
     )
 
 class CustomerAssignForm(forms.Form):

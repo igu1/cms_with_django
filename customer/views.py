@@ -5,7 +5,8 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
 from django.core.paginator import Paginator
-from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory
+from django.utils import timezone
+from .models import User, Customer, FileImport, CustomerStatus, CustomerStatusHistory, FollowUpReminder
 from .forms import CustomerStatusForm, CustomerAssignForm
 import pandas as pd
 import os
@@ -139,6 +140,14 @@ def sales_dashboard(request):
         changed_by=request.user
     ).select_related('customer').order_by('-changed_at')[:10]
 
+    # Get today's follow-up reminders
+    today = timezone.now().date()
+    todays_followups = FollowUpReminder.objects.filter(
+        counselor=request.user,
+        follow_up_date=today,
+        is_completed=False
+    ).select_related('customer').order_by('created_at')
+
     # Pagination for assigned customers
     recent_customers = assigned_customers.order_by('-updated_at')
     paginator = Paginator(recent_customers, 10)  # Show 10 customers per page
@@ -151,7 +160,9 @@ def sales_dashboard(request):
         'recent_activity': recent_activity,
         'assigned_customers': page_obj,
         'page_obj': page_obj,  # For pagination template
-        'statuses': statuses
+        'statuses': statuses,
+        'todays_followups': todays_followups,
+        'today': today
     }
 
     return render(request, 'customer/sales_dashboard.html', context)
@@ -219,7 +230,19 @@ def import_file(request):
             else:
                 df['remark'] = df['remark'].fillna('')
 
-            phone_numbers = df['phone_number'].astype(str).tolist()
+            # Clean and normalize phone numbers
+            df['phone_number'] = df['phone_number'].astype(str).str.strip()
+
+            # Remove duplicates from the dataframe itself, keeping the first occurrence
+            duplicate_phones = df[df.duplicated('phone_number', keep='first')]['phone_number'].tolist()
+            if duplicate_phones:
+                messages.warning(
+                    request,
+                    f'Found {len(duplicate_phones)} duplicate phone numbers in the file. Only the first occurrence of each will be processed.'
+                )
+                df = df.drop_duplicates('phone_number', keep='first')
+
+            phone_numbers = df['phone_number'].tolist()
             existing_customers = Customer.objects.filter(phone_number__in=phone_numbers)
             existing_map = {c.phone_number: c for c in existing_customers}
 
@@ -227,6 +250,7 @@ def import_file(request):
             new_objs = []
             successful_records = 0
             failed_records = 0
+            skipped_records = 0
 
             for row in df.itertuples(index=False):
                 phone = str(getattr(row, 'phone_number'))
@@ -237,28 +261,45 @@ def import_file(request):
 
                 try:
                     if phone in existing_map:
+                        # Update existing customer
                         customer = existing_map[phone]
                         customer.name = name
                         customer.area = area
                         customer.date = date
                         customer.remark = remark
                         update_objs.append(customer)
+                        successful_records += 1
                     else:
-                        new_objs.append(Customer(
-                            phone_number=phone,
-                            name=name,
-                            area=area,
-                            date=date,
-                            remark=remark
-                        ))
-                    successful_records += 1
-                except Exception:
+                        # Check if this phone number already exists in new_objs
+                        # This is a safeguard in case the unique constraint fails
+                        if phone not in [obj.phone_number for obj in new_objs]:
+                            new_objs.append(Customer(
+                                phone_number=phone,
+                                name=name,
+                                area=area,
+                                date=date,
+                                remark=remark
+                            ))
+                            successful_records += 1
+                        else:
+                            skipped_records += 1
+                except Exception as e:
                     failed_records += 1
 
             if update_objs:
                 Customer.objects.bulk_update(update_objs, ['name', 'area', 'date', 'remark'])
+
             if new_objs:
-                Customer.objects.bulk_create(new_objs, batch_size=1000)
+                try:
+                    Customer.objects.bulk_create(new_objs, batch_size=1000, ignore_conflicts=True)
+                except Exception as e:
+                    # If bulk_create fails, try one by one to handle unique constraint violations
+                    for obj in new_objs:
+                        try:
+                            obj.save()
+                        except Exception:
+                            failed_records += 1
+                            successful_records -= 1
 
             file_import.total_records = len(df)
             file_import.successful_records = successful_records
@@ -340,8 +381,22 @@ def customer_detail(request, customer_id):
 
     status_history = customer.status_history.all().order_by('-changed_at')
 
+    # Get any existing follow-up reminder
+    follow_up_reminder = None
+    try:
+        follow_up_reminder = FollowUpReminder.objects.filter(
+            customer=customer,
+            is_completed=False
+        ).latest('created_at')
+    except FollowUpReminder.DoesNotExist:
+        pass
+
     # Initialize forms
-    status_form = CustomerStatusForm(initial={'status': customer.status})
+    initial_data = {'status': customer.status}
+    if follow_up_reminder and customer.status == CustomerStatus.FOLLOW_UP:
+        initial_data['follow_up_date'] = follow_up_reminder.follow_up_date
+
+    status_form = CustomerStatusForm(initial=initial_data)
     assign_form = CustomerAssignForm(initial={'assigned_to': customer.assigned_to})
 
     context = {
@@ -350,7 +405,9 @@ def customer_detail(request, customer_id):
         'statuses': CustomerStatus.choices,
         'status_form': status_form,
         'assign_form': assign_form,
-        'sales_users': User.objects.filter(role=User.SALES)
+        'sales_users': User.objects.filter(role=User.SALES),
+        'today': timezone.now().date(),
+        'follow_up_reminder': follow_up_reminder
     }
 
     return render(request, 'customer/customer_detail.html', context)
@@ -372,6 +429,7 @@ def update_customer_status(request, customer_id):
 
     new_status = form.cleaned_data['status']
     notes = form.cleaned_data['notes']
+    follow_up_date = form.cleaned_data.get('follow_up_date')
 
     if not new_status or new_status not in dict(CustomerStatus.choices):
         return JsonResponse({'error': 'Invalid status'}, status=400)
@@ -381,13 +439,42 @@ def update_customer_status(request, customer_id):
     customer.save()
 
     # Create status history record
-    CustomerStatusHistory.objects.create(
+    status_history = CustomerStatusHistory.objects.create(
         customer=customer,
         previous_status=previous_status,
         new_status=new_status,
         changed_by=request.user,
         notes=notes
     )
+
+    # Handle follow-up reminder creation/update
+    if new_status == CustomerStatus.FOLLOW_UP and follow_up_date:
+        # Check if there's an existing active follow-up reminder
+        try:
+            reminder = FollowUpReminder.objects.get(
+                customer=customer,
+                is_completed=False
+            )
+            # Update existing reminder
+            reminder.follow_up_date = follow_up_date
+            reminder.notes = notes
+            reminder.status_history = status_history
+            reminder.save()
+        except FollowUpReminder.DoesNotExist:
+            # Create new reminder
+            FollowUpReminder.objects.create(
+                customer=customer,
+                counselor=request.user,
+                follow_up_date=follow_up_date,
+                notes=notes,
+                status_history=status_history
+            )
+    # Mark follow-up as completed if status changed from FOLLOW_UP to something else
+    elif previous_status == CustomerStatus.FOLLOW_UP and new_status != CustomerStatus.FOLLOW_UP:
+        FollowUpReminder.objects.filter(
+            customer=customer,
+            is_completed=False
+        ).update(is_completed=True)
 
     return JsonResponse({
         'success': True,
